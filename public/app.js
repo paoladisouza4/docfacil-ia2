@@ -423,7 +423,7 @@ function wizardNext() {
   if (currentStep === 2 && (!V('p_a_nome') || !V('p_b_nome'))) { showNotif('Preencha os nomes das partes', '⚠️'); return; }
   if (currentStep === 3 && !V('obj_desc')) { showNotif('Descreva o objeto do contrato', '⚠️'); return; }
 
-  if (currentStep === 1 && selectedType.startsWith('gen_')) { generateWithAI(); return; }
+  if (currentStep === 1 && selectedType.startsWith('gen_')) { openIAModal(); return; }
   if (currentStep === TOTAL_STEPS) { generateDocument(); return; }
 
   currentStep++;
@@ -554,12 +554,12 @@ function generateDocument() {
 function buildParty(prefix) {
   return {
     nome:  V(`${prefix}_nome`) || (prefix === 'p_a' ? 'CONTRATANTE' : 'CONTRATADO'),
-    doc:   V(`${prefix}_doc`)  || '000.000.000-00',
+    doc:   V(`${prefix}_doc`)  || '',
     rg:    V(`${prefix}_rg`)   || '',
     nac:   V(`${prefix}_nac`)  || 'Brasileiro(a)',
     est:   V(`${prefix}_est`)  || 'solteiro(a)',
     prof:  V(`${prefix}_prof`) || '',
-    end:   V(`${prefix}_end`)  || 'não informado',
+    end:   V(`${prefix}_end`)  || '',
     tel:   V(`${prefix}_tel`)  || '',
     email: V(`${prefix}_email`)|| '',
   };
@@ -569,13 +569,15 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
   const roman = ['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
 
   const partyLine = (p, role) => {
-    let line = `<strong>${p.nome}</strong>, ${p.nac}, ${p.est}`;
-    if (p.prof) line += `, ${p.prof}`;
-    line += `, portador(a) do CPF/CNPJ nº <strong>${p.doc}</strong>`;
-    if (p.rg) line += `, RG nº ${p.rg}`;
-    line += `, residente/domiciliado(a) em ${p.end}`;
-    if (p.tel) line += `, tel.: ${p.tel}`;
-    if (p.email) line += `, e-mail: ${p.email}`;
+    let line = `<strong>${p.nome || role}</strong>`;
+    if (p.nac && p.nac !== 'undefined') line += `, ${p.nac}`;
+    if (p.est && p.est !== 'undefined') line += `, ${p.est}`;
+    if (p.prof && p.prof !== 'undefined') line += `, ${p.prof}`;
+    if (p.doc && p.doc !== 'undefined') line += `, portador(a) do CPF/CNPJ nº <strong>${p.doc}</strong>`;
+    if (p.rg  && p.rg  !== 'undefined') line += `, RG nº ${p.rg}`;
+    if (p.end && p.end !== 'undefined') line += `, residente/domiciliado(a) em ${p.end}`;
+    if (p.tel && p.tel !== 'undefined') line += `, tel.: ${p.tel}`;
+    if (p.email && p.email !== 'undefined') line += `, e-mail: ${p.email}`;
     return line + '.';
   };
 
@@ -785,27 +787,43 @@ function saveEdit() {
   d.jur = { ...d.jur, foro: G('edit_jur_foro'), local: G('edit_jur_local'), extra: G('edit_jur_extra') };
   d.editedAt = new Date().toISOString();
 
-  // Regenera o HTML do documento
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
-  const roleA = getRoleA(d.type);
-  const roleB = getRoleB(d.type);
-  const vigText = d.obj.vigencia
-    ? `por prazo ${d.obj.vigencia === 'indeterminado' ? 'indeterminado' : 'determinado de ' + d.obj.vigencia}`
-    : `de ${d.obj.inicio || dateStr} a ${d.obj.fim || 'indeterminado'}`;
+  // Documentos gerados pela IA — apenas atualiza o HTML com substituição de texto
+  // Documentos de template — regenera o HTML completo
+  if (d.generatedByAI) {
+    // Para docs de IA, faz substituição direta no HTML existente
+    let html = d.html;
+    const oldPaNome = d.pa?.nome;
+    const oldPbNome = d.pb?.nome;
+    if (oldPaNome && G('edit_pa_nome') && oldPaNome !== G('edit_pa_nome')) {
+      html = html.split(oldPaNome).join(G('edit_pa_nome'));
+    }
+    if (oldPbNome && G('edit_pb_nome') && oldPbNome !== G('edit_pb_nome')) {
+      html = html.split(oldPbNome).join(G('edit_pb_nome'));
+    }
+    d.html = html;
+  } else {
+    // Para docs de template, regenera o HTML completo
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+    const roleA = getRoleA(d.type);
+    const roleB = getRoleB(d.type);
+    const vigText = d.obj.vigencia
+      ? `por prazo ${d.obj.vigencia === 'indeterminado' ? 'indeterminado' : 'determinado de ' + d.obj.vigencia}`
+      : `de ${d.obj.inicio || dateStr} a ${d.obj.fim || 'indeterminado'}`;
 
-  d.html = buildDocHTML({
-    num: d.id, docTitle: getDocTitle(d.type), dateStr,
-    pa: d.pa, pb: d.pb,
-    t1: { nome:'___________________________', doc:'___________________' },
-    t2: { nome:'___________________________', doc:'___________________' },
-    obj: d.obj, val: d.val, jur: d.jur,
-    roleA, roleB, vigText,
-    extraClauses: '', finalClauseN: 6, typeInfo: d.typeInfo,
-  });
+    d.html = buildDocHTML({
+      num: d.id, docTitle: getDocTitle(d.type), dateStr,
+      pa: d.pa, pb: d.pb,
+      t1: { nome:'___________________________', doc:'___________________' },
+      t2: { nome:'___________________________', doc:'___________________' },
+      obj: d.obj, val: d.val, jur: d.jur,
+      roleA, roleB, vigText,
+      extraClauses: '', finalClauseN: 6, typeInfo: d.typeInfo,
+    });
+  }
 
   updateDocFS(d).then(() => {
-    showNotif('Documento atualizado com sucesso! ✏️', '✏️');
+    showNotif('Documento atualizado! ✏️', '✏️');
     viewDocument(d.id);
   });
 }
@@ -1016,47 +1034,251 @@ function removeIATyping(id) { document.getElementById(id)?.remove(); }
 //  GERAÇÃO VIA IA (Extras)
 // ════════════════════════════════════════════════════════════════
 
-async function generateWithAI() {
-  const allT    = getAllTypes();
+// ════════════════════════════════════════════════════════════════
+//  MODAL DE DADOS — Extras IA
+// ════════════════════════════════════════════════════════════════
+
+const IA_MODAL_FIELDS = {
+  gen_curriculo: {
+    titulo: '📋 Currículo via IA',
+    sub: 'Preencha seus dados e a IA cria seu currículo completo',
+    campos: [
+      { id:'ia_nome',        label:'Nome completo *',          placeholder:'Ex: João da Silva Santos',   full:true },
+      { id:'ia_profissao',   label:'Profissão / Cargo *',      placeholder:'Ex: Desenvolvedor Full Stack' },
+      { id:'ia_experiencia', label:'Anos de experiência *',    placeholder:'Ex: 5 anos' },
+      { id:'ia_cidade',      label:'Cidade / Estado',          placeholder:'Ex: São Paulo, SP' },
+      { id:'ia_email',       label:'E-mail profissional',      placeholder:'Ex: joao@email.com' },
+      { id:'ia_telefone',    label:'Telefone / WhatsApp',      placeholder:'Ex: (11) 99999-9999' },
+      { id:'ia_habilidades', label:'Principais habilidades *', placeholder:'Ex: JavaScript, React, Node.js, SQL', full:true },
+      { id:'ia_formacao',    label:'Formação acadêmica',       placeholder:'Ex: Ciência da Computação — USP (2018)', full:true },
+      { id:'ia_objetivo',    label:'Objetivo profissional',    placeholder:'Ex: Busco oportunidade em empresas de tecnologia...', full:true, textarea:true },
+    ]
+  },
+  gen_carta: {
+    titulo: '✉️ Carta Formal via IA',
+    sub: 'Preencha os dados e a IA redige sua carta profissional',
+    campos: [
+      { id:'ia_remetente',   label:'Seu nome (remetente) *',   placeholder:'Ex: João da Silva Santos',   full:true },
+      { id:'ia_destinatario',label:'Destinatário *',           placeholder:'Ex: Dr. Carlos Mendes',      full:true },
+      { id:'ia_empresa',     label:'Empresa / Instituição',    placeholder:'Ex: Empresa ABC Ltda',       full:true },
+      { id:'ia_assunto',     label:'Assunto da carta *',       placeholder:'Ex: Solicitação de reunião comercial', full:true },
+      { id:'ia_objetivo',    label:'O que você quer comunicar? *', placeholder:'Explique o objetivo da carta...', full:true, textarea:true },
+      { id:'ia_cidade',      label:'Cidade / Data',            placeholder:'Ex: São Paulo, abril de 2026' },
+    ]
+  },
+  gen_proposta: {
+    titulo: '📊 Proposta Comercial via IA',
+    sub: 'Informe os dados e a IA monta sua proposta completa',
+    campos: [
+      { id:'ia_empresa',     label:'Sua empresa / nome *',     placeholder:'Ex: Silva Tecnologia ME',    full:true },
+      { id:'ia_cliente',     label:'Nome do cliente *',        placeholder:'Ex: Empresa XYZ Ltda',       full:true },
+      { id:'ia_servico',     label:'Serviço oferecido *',      placeholder:'Ex: Desenvolvimento de sistema web', full:true },
+      { id:'ia_valor',       label:'Valor aproximado',         placeholder:'Ex: R$ 5.000,00' },
+      { id:'ia_prazo',       label:'Prazo de entrega',         placeholder:'Ex: 30 dias' },
+      { id:'ia_descricao',   label:'Descreva o projeto *',     placeholder:'Detalhe o que será entregue, metodologia, diferenciais...', full:true, textarea:true },
+    ]
+  },
+  gen_email: {
+    titulo: '📧 E-mail Profissional via IA',
+    sub: 'Informe os dados e a IA redige o e-mail perfeito',
+    campos: [
+      { id:'ia_remetente',   label:'Seu nome *',               placeholder:'Ex: João Silva',             full:true },
+      { id:'ia_destinatario',label:'Para quem é o e-mail? *',  placeholder:'Ex: Gerente de RH, Cliente, Fornecedor', full:true },
+      { id:'ia_tipo',        label:'Tipo de e-mail *',
+        select: ['Apresentação comercial','Proposta de serviço','Agradecimento pós-reunião','Follow-up de proposta','Solicitação de reunião','Cobrança amigável','Outro'] },
+      { id:'ia_objetivo',    label:'O que quer comunicar? *',  placeholder:'Ex: Quero apresentar meu serviço de...', full:true, textarea:true },
+    ]
+  },
+  gen_contrato_ia: {
+    titulo: '📜 Contrato Inteligente via IA',
+    sub: 'Preencha os dados e a IA gera um contrato completo e personalizado',
+    campos: [
+      { id:'ia_contratante', label:'Nome do Contratante *',    placeholder:'Ex: João da Silva ou Empresa LTDA', full:true },
+      { id:'ia_cpf_a',       label:'CPF/CNPJ do Contratante', placeholder:'Ex: 000.000.000-00' },
+      { id:'ia_contratado',  label:'Nome do Contratado *',     placeholder:'Ex: Maria Souza ou Empresa ME',     full:true },
+      { id:'ia_cpf_b',       label:'CPF/CNPJ do Contratado',  placeholder:'Ex: 000.000.000-00' },
+      { id:'ia_servico',     label:'Objeto do contrato *',     placeholder:'Ex: Desenvolvimento de site institucional', full:true },
+      { id:'ia_valor',       label:'Valor total (R$) *',       placeholder:'Ex: 3.000,00' },
+      { id:'ia_prazo',       label:'Prazo / Vigência *',       placeholder:'Ex: 60 dias ou 6 meses' },
+      { id:'ia_pagamento',   label:'Forma de pagamento',       placeholder:'Ex: 50% entrada e 50% na entrega' },
+      { id:'ia_cidade',      label:'Cidade da assinatura',     placeholder:'Ex: São Paulo, SP' },
+      { id:'ia_detalhes',    label:'Detalhes adicionais',      placeholder:'Inclua qualquer informação extra relevante...', full:true, textarea:true },
+    ]
+  },
+};
+
+function openIAModal() {
+  if (!selectedType || !selectedType.startsWith('gen_')) return;
+  const config = IA_MODAL_FIELDS[selectedType];
+  if (!config) { generateWithAI({}); return; }
+
+  // Monta o modal
+  const campos = config.campos.map(c => {
+    if (c.select) {
+      return `
+        <div class="field ${c.full ? 'form-full' : ''}">
+          <label>${c.label}</label>
+          <select id="${c.id}">
+            ${c.select.map(op => `<option value="${op}">${op}</option>`).join('')}
+          </select>
+        </div>`;
+    }
+    if (c.textarea) {
+      return `
+        <div class="field ${c.full ? 'form-full' : ''}">
+          <label>${c.label}</label>
+          <textarea id="${c.id}" rows="3" placeholder="${c.placeholder}"></textarea>
+        </div>`;
+    }
+    return `
+      <div class="field ${c.full ? 'form-full' : ''}">
+        <label>${c.label}</label>
+        <input id="${c.id}" placeholder="${c.placeholder}"/>
+      </div>`;
+  }).join('');
+
+  document.getElementById('ia-modal-title').textContent = config.titulo;
+  document.getElementById('ia-modal-sub').textContent   = config.sub;
+  document.getElementById('ia-modal-campos').innerHTML  = campos;
+  document.getElementById('ia-modal-overlay').style.display = 'flex';
+}
+
+function closeIAModal() {
+  document.getElementById('ia-modal-overlay').style.display = 'none';
+}
+
+function confirmarGeracaoIA() {
+  const config = IA_MODAL_FIELDS[selectedType];
+  if (!config) return;
+
+  // Coleta todos os dados preenchidos
+  const dados = {};
+  config.campos.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (el) dados[c.id] = el.value.trim();
+  });
+
+  // Valida campos obrigatórios
+  const obrigatorios = config.campos.filter(c => c.label.includes('*'));
+  const vazio = obrigatorios.find(c => !dados[c.id]);
+  if (vazio) {
+    showNotif(`Preencha: ${vazio.label.replace(' *','')}`, '⚠️');
+    return;
+  }
+
+  closeIAModal();
+  generateWithAI(dados);
+}
+
+async function generateWithAI(dados = {}) {
+  const allT     = getAllTypes();
   const typeInfo = allT.find(t => t.id === selectedType) || { name:'Documento', emoji:'🤖' };
 
   showIALoading(`Gerando "${typeInfo.name}" com IA...`);
 
+  // Prompts personalizados com os dados do cliente
   const prompts = {
-    gen_curriculo: `Gere um currículo profissional completo em HTML com as classes do DocFácil (doc-main-title, doc-subtitle, clausula, clausula-title, clausula-body). Seções: Perfil profissional, Experiência, Formação, Habilidades, Idiomas. Use dados de exemplo realistas e profissionais.`,
-    gen_carta:     `Gere uma carta formal profissional em HTML. Inclua: remetente, data, destinatário, assunto, 3 parágrafos formais, despedida, assinatura. Formate elegantemente.`,
-    gen_proposta:  `Gere uma proposta comercial completa em HTML com: apresentação, escopo, metodologia, cronograma, investimento e condições. Texto profissional de exemplo.`,
-    gen_email:     `Gere 3 modelos de e-mail profissional em HTML: (1) Apresentação comercial, (2) Follow-up de proposta, (3) Agradecimento pós-reunião. Cada um bem estruturado.`,
-    gen_contrato_ia: `Gere um contrato de prestação de serviços profissional e completo em HTML usando as classes: doc-main-title, doc-subtitle, parties-block, parties-title, party, party-role, clausula, clausula-title, clausula-body. Inclua 10 cláusulas completas com linguagem jurídica real brasileira. Use placeholders [CONTRATANTE] e [CONTRATADO].`,
+    gen_curriculo: `Crie um currículo profissional COMPLETO e PERSONALIZADO em HTML para:
+Nome: ${dados.ia_nome}
+Profissão: ${dados.ia_profissao}
+Experiência: ${dados.ia_experiencia}
+Cidade/Estado: ${dados.ia_cidade || 'não informado'}
+E-mail: ${dados.ia_email || 'não informado'}
+Telefone: ${dados.ia_telefone || 'não informado'}
+Habilidades: ${dados.ia_habilidades}
+Formação: ${dados.ia_formacao || 'não informado'}
+Objetivo: ${dados.ia_objetivo || 'não informado'}
+
+Use HTML com as seguintes classes para formatação: doc-main-title, doc-subtitle, clausula, clausula-title, clausula-body.
+Crie seções: Dados Pessoais, Objetivo Profissional, Experiência Profissional (crie 2-3 experiências coerentes com o perfil), Formação Acadêmica, Habilidades e Competências, Idiomas.
+Use APENAS os dados fornecidos acima. NÃO invente informações. Retorne SOMENTE o HTML, sem markdown.`,
+
+    gen_carta: `Redija uma carta formal profissional COMPLETA em HTML para:
+Remetente: ${dados.ia_remetente}
+Destinatário: ${dados.ia_destinatario}
+Empresa/Instituição: ${dados.ia_empresa || ''}
+Assunto: ${dados.ia_assunto}
+Objetivo: ${dados.ia_objetivo}
+Local/Data: ${dados.ia_cidade || 'São Paulo, ' + new Date().toLocaleDateString('pt-BR', {month:'long', year:'numeric'})}
+
+Use HTML profissional com formatação elegante. Inclua: cabeçalho, data, destinatário, corpo formal com 3 parágrafos bem desenvolvidos, despedida e assinatura.
+Use APENAS os dados fornecidos. Retorne SOMENTE o HTML, sem markdown.`,
+
+    gen_proposta: `Crie uma proposta comercial COMPLETA e PERSONALIZADA em HTML para:
+Empresa/Profissional: ${dados.ia_empresa}
+Cliente: ${dados.ia_cliente}
+Serviço: ${dados.ia_servico}
+Valor: ${dados.ia_valor || 'a definir'}
+Prazo: ${dados.ia_prazo || 'a definir'}
+Descrição do projeto: ${dados.ia_descricao}
+
+Use HTML profissional com seções: Apresentação, Entendimento do Projeto, Escopo de Trabalho, Metodologia, Cronograma, Investimento e Condições de Pagamento, Próximos Passos.
+Use APENAS os dados fornecidos. Retorne SOMENTE o HTML, sem markdown.`,
+
+    gen_email: `Redija um e-mail profissional COMPLETO em HTML para:
+Remetente: ${dados.ia_remetente}
+Destinatário: ${dados.ia_destinatario}
+Tipo: ${dados.ia_tipo}
+Objetivo: ${dados.ia_objetivo}
+
+Crie um e-mail bem estruturado com assunto sugerido, saudação, corpo com 2-3 parágrafos objetivos e profissionais, e despedida.
+Use APENAS os dados fornecidos. Retorne SOMENTE o HTML, sem markdown.`,
+
+    gen_contrato_ia: `Gere um contrato profissional COMPLETO, PERSONALIZADO e juridicamente válido em HTML para:
+Contratante: ${dados.ia_contratante} — CPF/CNPJ: ${dados.ia_cpf_a || 'não informado'}
+Contratado: ${dados.ia_contratado} — CPF/CNPJ: ${dados.ia_cpf_b || 'não informado'}
+Objeto: ${dados.ia_servico}
+Valor: R$ ${dados.ia_valor}
+Prazo: ${dados.ia_prazo}
+Pagamento: ${dados.ia_pagamento || 'à vista'}
+Cidade: ${dados.ia_cidade || 'local da assinatura'}
+Detalhes: ${dados.ia_detalhes || 'nenhum'}
+
+Use HTML com classes: doc-main-title, doc-subtitle, parties-block, parties-title, party, party-role, clausula, clausula-title, clausula-body.
+Inclua 10+ cláusulas completas com linguagem jurídica real brasileira citando o Código Civil.
+Use APENAS os dados fornecidos acima. Retorne SOMENTE o HTML, sem markdown.`,
   };
 
-  const prompt = prompts[selectedType] || `Gere um documento profissional do tipo "${typeInfo.name}" em HTML completo e formatado para uso no Brasil, com linguagem formal e técnica.`;
+  const prompt = prompts[selectedType] || `Gere um documento profissional do tipo "${typeInfo.name}" em HTML usando os dados: ${JSON.stringify(dados)}. Retorne SOMENTE o HTML, sem markdown.`;
 
   try {
     const data = await callIA({
-      max_tokens: 2500,
-      system: 'Você é especialista em documentos profissionais brasileiros. Gere documentos completos em HTML com formatação profissional. Retorne apenas o HTML do conteúdo, sem tags html/body/head.',
+      max_tokens: 3000,
+      system: 'Você é especialista em documentos profissionais brasileiros. Gere documentos completos em HTML. NUNCA use markdown, NUNCA use ```html, retorne APENAS o HTML puro do conteúdo.',
       messages: [{ role:'user', content: prompt }],
     });
-    const html = data.content?.[0]?.text || `<div class="doc-main-title">${typeInfo.name}</div><p>Documento gerado com IA.</p>`;
+
+    let html = data.content?.[0]?.text || `<div class="doc-main-title">${typeInfo.name}</div><p>Erro ao gerar. Tente novamente.</p>`;
+    // Remove qualquer markdown que ainda passe
+    html = html.replace(/^```html\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/i,'').trim();
+
     hideIALoading();
 
     const num = `IA-${new Date().getFullYear()}-${Math.floor(Math.random()*9000)+1000}`;
     const docObj = {
       id: num, type: selectedType, typeInfo,
       title: typeInfo.name,
-      pa:{ nome: currentUser.displayName || 'Usuário' }, pb:{ nome:'—' },
-      val:{}, obj:{}, jur:{},
+      pa: { nome: dados.ia_nome || dados.ia_remetente || dados.ia_contratante || dados.ia_empresa || currentUser.displayName || 'Usuário' },
+      pb: { nome: dados.ia_destinatario || dados.ia_cliente || dados.ia_contratado || '—' },
+      val: { total: dados.ia_valor || '' },
+      obj: { desc: dados.ia_servico || dados.ia_assunto || dados.ia_objetivo || '' },
+      jur: {},
+      dadosIA: dados,
       html, status:'rascunho',
-      createdAt: new Date().toISOString(), generatedByAI: true,
+      createdAt: new Date().toISOString(),
+      generatedByAI: true,
     };
+
     await saveDocFS(docObj);
     currentDocs.unshift(docObj);
     renderDocsBadge();
+    updateDashboard();
     viewDocument(num);
-    showNotif('Documento gerado pela IA! 🤖', '🤖');
-  } catch {
+    showNotif(`${typeInfo.name} gerado com sucesso! 🤖`, '🤖');
+
+  } catch (err) {
     hideIALoading();
+    console.error(err);
     showNotif('Erro ao gerar com IA. Tente novamente.', '❌');
   }
 }
