@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
         'X-Title':       'DocFÃ¡cil IA',
       },
       body: JSON.stringify({
-        model:      'google/gemma-2-9b-it:free',
+        model:      'openrouter/auto',
         max_tokens,
         messages: [
           ...(system ? [{ role: 'system', content: system }] : []),
