@@ -17,11 +17,11 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_KEY}`,
-        'HTTP-Referer':  'https://docfacil-ia.vercel.app',
+        'HTTP-Referer':  'https://docfacil-ia2.vercel.app',
         'X-Title':       'DocFácil IA',
       },
       body: JSON.stringify({
-        model:      'meta-llama/llama-3.1-8b-instruct:free',
+        model:      'google/gemma-2-9b-it:free',
         max_tokens,
         messages: [
           ...(system ? [{ role: 'system', content: system }] : []),
