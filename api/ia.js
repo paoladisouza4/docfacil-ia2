@@ -1,13 +1,13 @@
-// api/ia.js — Vercel Serverless Function
-// Roda no servidor — a key nunca chega ao cliente
+// api/ia.js â€” Vercel Serverless Function
+// Roda no servidor â€” a key nunca chega ao cliente
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin',  '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST')   return res.status(405).json({ error: 'Método não permitido' });
+  if (req.method !== 'POST')   return res.status(405).json({ error: 'MÃ©todo nÃ£o permitido' });
 
   try {
     const { messages = [], system = '', max_tokens = 1500 } = req.body;
@@ -17,8 +17,8 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_KEY}`,
-        'HTTP-Referer':  'https://docfacil-ia2.vercel.app',
-        'X-Title':       'DocFácil IA',
+        'HTTP-Referer':  'https://docfacil-ia.vercel.app',
+        'X-Title':       'DocFÃ¡cil IA',
       },
       body: JSON.stringify({
         model:      'google/gemma-2-9b-it:free',
