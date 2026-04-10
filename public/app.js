@@ -531,7 +531,7 @@ function generateDocument() {
   let clausN = 5;
   const extraClauses = selectedClauses.map(c => buildExtraClause(c, ++clausN, pa, pb)).join('');
 
-  const html = buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, roleA, roleB, vigText, extraClauses, finalClauseN: clausN + 1, typeInfo });
+  const html = buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, roleA, roleB, vigText, extraClauses, finalClauseN: clausN + 1, typeInfo, type: selectedType });
 
   const docObj = {
     id: num, type: selectedType, typeInfo,
@@ -565,137 +565,1103 @@ function buildParty(prefix) {
   };
 }
 
-function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, roleA, roleB, vigText, extraClauses, finalClauseN, typeInfo }) {
+function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, roleA, roleB, vigText, extraClauses, finalClauseN, typeInfo, type }) {
   const roman = ['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
 
   const partyLine = (p, role) => {
     let line = `<strong>${p.nome || role}</strong>`;
     if (p.nac && p.nac !== 'undefined') line += `, ${p.nac}`;
     if (p.est && p.est !== 'undefined') line += `, ${p.est}`;
-    if (p.prof && p.prof !== 'undefined') line += `, ${p.prof}`;
-    if (p.doc && p.doc !== 'undefined') line += `, portador(a) do CPF/CNPJ nº <strong>${p.doc}</strong>`;
-    if (p.rg  && p.rg  !== 'undefined') line += `, RG nº ${p.rg}`;
-    if (p.end && p.end !== 'undefined') line += `, residente/domiciliado(a) em ${p.end}`;
-    if (p.tel && p.tel !== 'undefined') line += `, tel.: ${p.tel}`;
-    if (p.email && p.email !== 'undefined') line += `, e-mail: ${p.email}`;
+    if (p.prof && p.prof !== 'undefined' && p.prof) line += `, ${p.prof}`;
+    if (p.doc && p.doc !== 'undefined' && p.doc) line += `, portador(a) do CPF/CNPJ nº <strong>${p.doc}</strong>`;
+    if (p.rg  && p.rg  !== 'undefined' && p.rg)  line += `, RG nº ${p.rg}`;
+    if (p.end && p.end !== 'undefined' && p.end)  line += `, residente/domiciliado(a) em ${p.end}`;
+    if (p.tel && p.tel !== 'undefined' && p.tel)  line += `, tel.: ${p.tel}`;
+    if (p.email && p.email !== 'undefined' && p.email) line += `, e-mail: ${p.email}`;
     return line + '.';
   };
 
-  return `
+  const aviso = `<div style="margin-top:32px;padding:12px 16px;border:1px dashed #ccc;border-radius:4px;font-size:8.5pt;color:#777;text-align:center;line-height:1.5;">
+    ⚠️ Este documento é um modelo de referência gerado pelo DocFácil. Não constitui assessoria ou consultoria jurídica. Para situações específicas, consulte um advogado inscrito na OAB.
+  </div>`;
+
+  const cabecalho = `
   <div class="doc-masthead">
-    <div class="masthead-logo">DocFácil IA · Documento Profissional</div>
+    <div class="masthead-logo">DocFácil · Gerador de Modelos de Documentos</div>
     <div class="masthead-num">Nº ${num}</div>
   </div>
+  <div class="doc-main-title">${docTitle}</div>`;
 
-  <div class="doc-main-title">${docTitle}</div>
-  <div class="doc-subtitle">Instrumento Particular com Força de Documento Jurídico · ${dateStr}</div>
+  // ── Documentos com templates específicos ──
+  const t = type || selectedType;
 
+  // ════ LOCAÇÃO RESIDENCIAL / COMERCIAL / SIMPLES / COM FIADOR ════
+  if (['aluguel_res','aluguel_com','locacao_simples','locacao_fiador'].includes(t)) {
+    const tipoImovel = t === 'aluguel_com' ? 'comercial' : 'residencial';
+    const lei = 'Lei nº 8.245/1991 (Lei do Inquilinato)';
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular de Locação · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">LOCADOR:</div><p>${partyLine(pa,'LOCADOR')}</p></div>
+      <div class="party"><div class="party-role">LOCATÁRIO:</div><p>${partyLine(pb,'LOCATÁRIO')}</p></div>
+      ${t === 'locacao_fiador' ? `<div class="party"><div class="party-role">FIADOR:</div><p>_____________________________, portador(a) do CPF nº _____________________, residente em _____________________________.</p></div>` : ''}
+    </div>
+    <p>As partes acima qualificadas têm entre si justo e acordado o presente Contrato de Locação, regido pela ${lei} e pelo Código Civil Brasileiro, mediante as seguintes cláusulas:</p>
+
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Imóvel Locado</div><div class="clausula-body">
+      <p>1.1. O LOCADOR cede ao LOCATÁRIO, para uso exclusivamente <strong>${tipoImovel}</strong>, o imóvel localizado em: <strong>${obj.desc}</strong></p>
+      <p>1.2. O imóvel é entregue em perfeitas condições de uso e habitabilidade, conforme Termo de Vistoria a ser anexado e assinado por ambas as partes no ato da entrega das chaves.</p>
+      <p>1.3. É expressamente vedada a sublocação, empréstimo ou cessão do imóvel, no todo ou em parte, sem prévia e expressa autorização por escrito do LOCADOR.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula II — Do Prazo</div><div class="clausula-body">
+      <p>2.1. A locação terá prazo <strong>${vigText}</strong>, com início em <strong>${obj.inicio}</strong> e término previsto em <strong>${obj.fim}</strong>.</p>
+      <p>2.2. Findo o prazo, caso nenhuma das partes manifeste intenção de encerrar o contrato, a locação prosseguirá por prazo indeterminado, podendo ser rescindida mediante aviso prévio de 30 (trinta) dias, nos termos do art. 46 da Lei do Inquilinato.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula III — Do Aluguel e Condições de Pagamento</div><div class="clausula-body">
+      <p>3.1. O aluguel mensal é de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), a ser pago até o dia <strong>${val.venc}</strong> de cada mês.</p>
+      <p>3.2. O pagamento será efetuado mediante: <strong>${val.banco || 'dados bancários a serem fornecidos pelo LOCADOR'}</strong>.</p>
+      <p>3.3. O não pagamento no prazo estipulado acarretará multa moratória de <strong>${val.multa}</strong> sobre o valor do aluguel em atraso, acrescida de juros de <strong>${val.juros}</strong> ao mês, calculados pro rata die, além de correção monetária pelo ${val.reajuste || 'IGPM'}, nos termos do art. 17 da Lei do Inquilinato.</p>
+      ${val.reajuste ? `<p>3.4. O valor do aluguel será reajustado anualmente pelo índice <strong>${val.reajuste}</strong>, nos termos da legislação vigente.</p>` : '<p>3.4. O valor do aluguel será reajustado anualmente pelo IGPM/FGV, nos termos da legislação vigente.</p>'}
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Das Obrigações do Locador</div><div class="clausula-body">
+      <p>4.1. São obrigações do LOCADOR: (a) entregar o imóvel em condições de uso; (b) garantir o uso pacífico do imóvel durante a locação; (c) responder pelos vícios ou defeitos anteriores à locação; (d) pagar os impostos e taxas incidentes sobre o imóvel (IPTU), salvo convenção em contrário.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula V — Das Obrigações do Locatário</div><div class="clausula-body">
+      <p>5.1. São obrigações do LOCATÁRIO: (a) pagar o aluguel e os encargos no prazo convencionado; (b) utilizar o imóvel somente para uso ${tipoImovel}; (c) conservar e zelar pelo imóvel, responsabilizando-se pelos danos causados; (d) pagar as contas de consumo (água, luz, gás e demais utilidades); (e) não realizar obras ou modificações sem prévia autorização por escrito do LOCADOR; (f) restituir o imóvel ao final da locação nas mesmas condições em que o recebeu, conforme Termo de Vistoria.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula VI — Da Rescisão</div><div class="clausula-body">
+      <p>6.1. O descumprimento de qualquer cláusula deste contrato ensejará sua rescisão imediata, sem prejuízo das penalidades cabíveis.</p>
+      <p>6.2. Em caso de rescisão antecipada pelo LOCATÁRIO, será devida multa de <strong>${jur.multa_resc}</strong>, proporcional ao período faltante, nos termos do art. 4º da Lei do Inquilinato.</p>
+      <p>6.3. A desocupação do imóvel deverá ser comunicada com antecedência mínima de <strong>${jur.rescisao}</strong>.</p>
+    </div></div>
+
+    ${t === 'locacao_fiador' ? `<div class="clausula"><div class="clausula-title">Cláusula VII — Da Fiança</div><div class="clausula-body">
+      <p>7.1. O FIADOR acima qualificado, em caráter solidário e como principal pagador, garante o cumprimento de todas as obrigações assumidas pelo LOCATÁRIO neste instrumento, respondendo pelo pagamento do aluguel, encargos, multas e demais obrigações decorrentes deste contrato até a efetiva desocupação e entrega das chaves do imóvel.</p>
+    </div></div>` : ''}
+
+    ${extraClauses}
+
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[t === 'locacao_fiador' ? 8 : 7]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Este contrato é regido pela ${lei} e pelo Código Civil (Lei nº 10.406/2002). As partes elegem o foro da <strong>${jur.foro || 'Comarca do local do imóvel'}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      ${t === 'locacao_fiador' ? `<div class="sig-grid"><div class="sig-item"><div class="sig-line"></div><div class="sig-name">_____________________________</div><div class="sig-role">FIADOR</div><div class="sig-doc">CPF: _____________________</div></div><div class="sig-item"></div></div>` : ''}
+      <div class="witnesses-block">
+        <div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ RECIBO DE PAGAMENTO ════
+  if (['recibo','recibo_aluguel'].includes(t)) {
+    return `${cabecalho}
+    <div class="doc-subtitle">Documento comprobatório de pagamento · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Dados do Recibo</div>
+      <div class="party"><div class="party-role">RECEBEDOR:</div><p>${partyLine(pa,'RECEBEDOR')}</p></div>
+      <div class="party"><div class="party-role">PAGANTE:</div><p>${partyLine(pb,'PAGANTE')}</p></div>
+    </div>
+
+    <div class="clausula"><div class="clausula-title">Declaração de Recebimento</div><div class="clausula-body">
+      <p>Declaro que recebi de <strong>${pb.nome}</strong>, a quantia de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), referente a: <strong>${obj.desc}</strong>.</p>
+      <p>Forma de pagamento: <strong>${val.forma}</strong>${val.banco ? ' — ' + val.banco : ''}.</p>
+      <p>Período de referência: <strong>${obj.inicio} a ${obj.fim !== 'indeterminado' ? obj.fim : obj.inicio}</strong>.</p>
+      <p>Por ser verdade, firmo o presente recibo, dando plena, geral e irrevogável quitação da referida quantia, para que produza seus efeitos legais.</p>
+    </div></div>
+
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">RECEBEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PAGANTE</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ DECLARAÇÕES ════
+  if (['decl_residencia','decl_renda','decl_informal','decl_comparec','decl_respons','decl_uniao'].includes(t)) {
+    const declTextos = {
+      decl_residencia: `Declaro, para os devidos fins, que resido no endereço: <strong>${obj.desc || obj.local}</strong>, nesta cidade, há aproximadamente <strong>${obj.vigencia || 'tempo indeterminado'}</strong>. Declaro ainda que as informações prestadas são verdadeiras e assumo total responsabilidade civil e criminal por esta declaração.`,
+      decl_renda: `Declaro, para os devidos fins, que minha renda ${obj.vigencia === '1 mês' ? 'mensal' : 'aproximada'} é de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), proveniente de: <strong>${obj.desc}</strong>. Declaro que as informações são verdadeiras e assumo total responsabilidade por esta declaração.`,
+      decl_informal: `Declaro, para os devidos fins, que exerço atividade de trabalho informal como <strong>${pa.prof || obj.desc}</strong>, auferindo renda aproximada de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}) mensais. Declaro que as informações são verdadeiras.`,
+      decl_comparec: `Declaro, para os devidos fins, que <strong>${pb.nome}</strong>, portador(a) do CPF nº <strong>${pb.doc}</strong>, compareceu a este estabelecimento/local em <strong>${obj.inicio}</strong>, no período de <strong>${obj.desc}</strong>. Esta declaração é fornecida a pedido do(a) interessado(a).`,
+      decl_respons: `Declaro, para os devidos fins, que me responsabilizo por: <strong>${obj.desc}</strong>. Assumo toda responsabilidade civil decorrente desta declaração, isentando terceiros de quaisquer ônus.`,
+      decl_uniao: `Declaramos, para os devidos fins legais, que vivemos em União Estável desde <strong>${obj.inicio}</strong>, de forma pública, contínua e duradoura, com o objetivo de constituir família, nos termos do art. 1.723 do Código Civil Brasileiro (Lei nº 10.406/2002). Declaramos ainda que não possuímos impedimentos legais para a união e que as informações prestadas são verdadeiras.`,
+    };
+    return `${cabecalho}
+    <div class="doc-subtitle">${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Declarante${t === 'decl_uniao' ? 's' : ''}</div>
+      <div class="party"><div class="party-role">DECLARANTE${t === 'decl_uniao' ? ' 1' : ''}:</div><p>${partyLine(pa,'DECLARANTE')}</p></div>
+      ${t === 'decl_uniao' ? `<div class="party"><div class="party-role">DECLARANTE 2:</div><p>${partyLine(pb,'DECLARANTE 2')}</p></div>` : ''}
+    </div>
+    <div class="clausula"><div class="clausula-body"><p>${declTextos[t]}</p>${jur.extra ? `<p>${jur.extra}</p>` : ''}</div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">DECLARANTE</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
+        ${t === 'decl_uniao' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DECLARANTE 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
+      </div>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ CONFISSÃO DE DÍVIDA / PARCELAMENTO / QUITAÇÃO ════
+  if (['confissao_divida','parcelamento','quitacao'].includes(t)) {
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">CREDOR:</div><p>${partyLine(pa,'CREDOR')}</p></div>
+      <div class="party"><div class="party-role">DEVEDOR:</div><p>${partyLine(pb,'DEVEDOR')}</p></div>
+    </div>
+    <p>As partes acima qualificadas celebram o presente instrumento mediante as seguintes condições:</p>
+
+    <div class="clausula"><div class="clausula-title">Cláusula I — ${t === 'quitacao' ? 'Da Quitação' : t === 'confissao_divida' ? 'Da Dívida Confessada' : 'Do Parcelamento'}</div><div class="clausula-body">
+      ${t === 'quitacao'
+        ? `<p>1.1. O CREDOR declara ter recebido do DEVEDOR a quantia de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), referente a: <strong>${obj.desc}</strong>.</p>
+           <p>1.2. Dando plena, geral e irrevogável quitação da referida quantia, nada mais tendo a reclamar a qualquer título, presente ou futuro, em razão da dívida ora quitada.</p>`
+        : t === 'confissao_divida'
+        ? `<p>1.1. O DEVEDOR reconhece e confessa, por este instrumento, ser devedor ao CREDOR da quantia de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), referente a: <strong>${obj.desc}</strong>.</p>
+           <p>1.2. O DEVEDOR compromete-se a quitar o débito até <strong>${obj.fim}</strong>, mediante <strong>${val.forma}</strong>.</p>`
+        : `<p>1.1. O DEVEDOR reconhece o débito de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}) perante o CREDOR e compromete-se a pagá-lo de forma parcelada.</p>
+           <p>1.2. O pagamento será realizado em parcelas de <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante ${val.banco || 'forma a ser acordada'}.</p>`
+      }
+      <p>${t === 'quitacao' ? '1.3.' : '1.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de <strong>${val.juros}</strong> ao mês, nos termos do art. 395 do Código Civil.</p>
+    </div></div>
+
+    ${extraClauses}
+
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Do Foro</div><div class="clausula-body">
+      <p>Fica eleito o foro de <strong>${jur.foro || 'da Comarca do domicílio do devedor'}</strong> para dirimir eventuais litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CREDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DEVEDOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block">
+        <div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ NDA / CONFIDENCIALIDADE ════
+  if (t === 'nda') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Acordo de Não-Divulgação — Non-Disclosure Agreement · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">PARTE DIVULGANTE:</div><p>${partyLine(pa,'PARTE DIVULGANTE')}</p></div>
+      <div class="party"><div class="party-role">PARTE RECEPTORA:</div><p>${partyLine(pb,'PARTE RECEPTORA')}</p></div>
+    </div>
+    <p>As partes celebram o presente Acordo de Confidencialidade, comprometendo-se a observar as seguintes cláusulas:</p>
+
+    <div class="clausula"><div class="clausula-title">Cláusula I — Das Informações Confidenciais</div><div class="clausula-body">
+      <p>1.1. Consideram-se confidenciais todas as informações relacionadas a: <strong>${obj.desc}</strong>, incluindo, mas não se limitando a: dados técnicos, financeiros, comerciais, estratégicos, segredos de negócio, know-how, projetos, planos, códigos-fonte e quaisquer outros dados revelados por uma parte à outra.</p>
+      <p>1.2. As obrigações de confidencialidade não se aplicam a informações que: (a) sejam ou se tornem de domínio público sem culpa da Parte Receptora; (b) já eram de conhecimento da Parte Receptora antes da divulgação; (c) sejam exigidas por determinação judicial ou legal.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula II — Das Obrigações</div><div class="clausula-body">
+      <p>2.1. A PARTE RECEPTORA compromete-se a: (a) manter as informações confidenciais em sigilo absoluto; (b) não divulgar, reproduzir ou utilizar as informações para fins outros que não os previstos neste acordo; (c) restringir o acesso às informações apenas às pessoas que necessitem conhecê-las para os fins acordados.</p>
+      <p>2.2. A vigência das obrigações de sigilo é de <strong>${vigText}</strong>, a contar da data de assinatura deste instrumento.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula III — Das Penalidades</div><div class="clausula-body">
+      <p>3.1. O descumprimento das obrigações deste acordo sujeitará a parte infratora ao pagamento de multa de <strong>R$ ${val.total || '10.000,00'}</strong>, sem prejuízo de perdas e danos apurados em juízo e demais sanções legais cabíveis.</p>
+    </div></div>
+
+    ${extraClauses}
+
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Do Foro</div><div class="clausula-body">
+      <p>Fica eleito o foro de <strong>${jur.foro}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE DIVULGANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE RECEPTORA</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block">
+        <div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ FREELANCER / PRESTAÇÃO DE SERVIÇOS / PJ / AUTÔNOMO ════
+  if (['servico','freelancer','trabalho_pj','autonomo'].includes(t)) {
+    const tipoContrato = t === 'freelancer' ? 'Freelancer' : t === 'trabalho_pj' ? 'Trabalho PJ' : t === 'autonomo' ? 'Autônomo' : 'Prestação de Serviços';
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular de ${tipoContrato} · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">CONTRATANTE:</div><p>${partyLine(pa,'CONTRATANTE')}</p></div>
+      <div class="party"><div class="party-role">CONTRATADO:</div><p>${partyLine(pb,'CONTRATADO')}</p></div>
+    </div>
+    <p>As partes celebram o presente instrumento mediante as seguintes cláusulas e condições, ficando expressamente acordado que a presente relação é de natureza civil, não gerando qualquer vínculo empregatício entre as partes, nos termos do art. 593 e seguintes do Código Civil:</p>
+
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto</div><div class="clausula-body">
+      <p>1.1. O CONTRATADO prestará ao CONTRATANTE os seguintes serviços: <strong>${obj.desc}</strong></p>
+      ${obj.entregaveis ? `<p>1.2. Entregáveis: ${obj.entregaveis}</p>` : ''}
+      <p>${obj.entregaveis ? '1.3.' : '1.2.'} Os serviços serão prestados ${vigText}, com início em <strong>${obj.inicio}</strong>${obj.fim !== 'indeterminado' ? ` e término em <strong>${obj.fim}</strong>` : ''}, no local: <strong>${obj.local || 'a ser definido entre as partes'}</strong>.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula II — Das Obrigações do Contratante</div><div class="clausula-body">
+      <p>2.1. Compete ao CONTRATANTE: ${obj.obrig_a || 'efetuar o pagamento nos prazos estabelecidos; fornecer as informações e subsídios necessários à execução dos serviços; comunicar ao CONTRATADO eventuais alterações no escopo com antecedência mínima de 5 dias úteis'}.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula III — Das Obrigações do Contratado</div><div class="clausula-body">
+      <p>3.1. Compete ao CONTRATADO: ${obj.obrig_b || 'executar os serviços com qualidade, diligência e nos prazos acordados; manter o CONTRATANTE informado sobre o andamento dos trabalhos; responsabilizar-se pelos impostos e contribuições decorrentes de sua atividade autônoma'}.</p>
+      <p>3.2. O CONTRATADO declara possuir plena capacidade técnica para a prestação dos serviços ora contratados, respondendo por eventuais falhas na execução.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Da Remuneração</div><div class="clausula-body">
+      <p>4.1. Pela prestação dos serviços, o CONTRATANTE pagará ao CONTRATADO o valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, com vencimento em <strong>${val.venc}</strong>.</p>
+      <p>4.2. O pagamento será realizado mediante: <strong>${val.banco || 'dados bancários a serem informados pelo CONTRATADO'}</strong>.</p>
+      ${val.reajuste ? `<p>4.3. O valor será reajustado pelo índice <strong>${val.reajuste}</strong>.</p>` : ''}
+      <p>${val.reajuste ? '4.4.' : '4.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de <strong>${val.juros}</strong> ao mês, nos termos do art. 395 do Código Civil.</p>
+      ${val.cond ? `<p>Condições especiais: ${val.cond}.</p>` : ''}
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula V — Da Rescisão</div><div class="clausula-body">
+      <p>5.1. Qualquer das partes poderá rescindir o presente instrumento mediante notificação escrita com antecedência mínima de <strong>${jur.rescisao}</strong>.</p>
+      <p>5.2. A rescisão imotivada implicará multa de <strong>${jur.multa_resc}</strong>.</p>
+      <p>5.3. Em caso de rescisão por descumprimento, a parte faltosa responderá por perdas e danos.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula VI — Da Ausência de Vínculo Empregatício</div><div class="clausula-body">
+      <p>6.1. O presente instrumento não gera vínculo empregatício, societário ou associativo entre as partes. O CONTRATADO exercerá suas atividades com autonomia, podendo prestar serviços a outros clientes, desde que não haja conflito de interesses com o CONTRATANTE.</p>
+      <p>6.2. O CONTRATADO é responsável pelo recolhimento de seus próprios tributos, previdência social e demais encargos decorrentes de sua atividade.</p>
+    </div></div>
+
+    ${extraClauses}
+
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Este instrumento é regido pelo Código Civil (Lei nº 10.406/2002). Fica eleito o foro de <strong>${jur.foro}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">CONTRATADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block">
+        <div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ INFLUENCIADOR DIGITAL ════
+  if (t === 'influenciador') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular de Parceria Comercial com Influenciador Digital · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">CONTRATANTE (MARCA/EMPRESA):</div><p>${partyLine(pa,'CONTRATANTE')}</p></div>
+      <div class="party"><div class="party-role">INFLUENCIADOR DIGITAL:</div><p>${partyLine(pb,'INFLUENCIADOR')}</p></div>
+    </div>
+    <p>As partes celebram o presente instrumento de parceria comercial para criação e divulgação de conteúdo digital, conforme as seguintes cláusulas:</p>
+
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto e Escopo da Parceria</div><div class="clausula-body">
+      <p>1.1. O INFLUENCIADOR compromete-se a criar e publicar conteúdo digital promovendo: <strong>${obj.desc}</strong></p>
+      ${obj.entregaveis ? `<p>1.2. Entregáveis: ${obj.entregaveis}</p>` : ''}
+      <p>${obj.entregaveis ? '1.3.' : '1.2.'} A parceria vigorará ${vigText}, com início em <strong>${obj.inicio}</strong>.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula II — Das Obrigações do Influenciador</div><div class="clausula-body">
+      <p>2.1. O INFLUENCIADOR compromete-se a: (a) criar conteúdo autêntico e alinhado com as diretrizes da marca; (b) identificar o conteúdo patrocinado conforme as normas do CONAR e BACEN; (c) não associar a marca a conteúdos polêmicos, ofensivos ou que violem a legislação; (d) manter as métricas e resultados informados ao CONTRATANTE.</p>
+      <p>2.2. O INFLUENCIADOR declara ser titular dos canais/perfis utilizados e possuir audiência verdadeira, respondendo por quaisquer irregularidades neste sentido.</p>
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula III — Da Remuneração</div><div class="clausula-body">
+      <p>3.1. Pela execução da parceria, o CONTRATANTE pagará ao INFLUENCIADOR o valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, mediante: <strong>${val.banco || 'dados a serem informados'}</strong>.</p>
+      ${val.cond ? `<p>3.2. Condições especiais: ${val.cond}.</p>` : ''}
+    </div></div>
+
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Dos Direitos Autorais</div><div class="clausula-body">
+      <p>4.1. O CONTRATANTE terá direito de uso do conteúdo produzido pelo INFLUENCIADOR pelo período de <strong>${vigText}</strong>, podendo ser prorrogado mediante acordo entre as partes e pagamento adicional a ser negociado.</p>
+    </div></div>
+
+    ${extraClauses}
+
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Fica eleito o foro de <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">INFLUENCIADOR DIGITAL</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block">
+        <div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ COMPRA E VENDA ════
+  if (t === 'compravenda') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular de Compra e Venda · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">VENDEDOR:</div><p>${partyLine(pa,'VENDEDOR')}</p></div>
+      <div class="party"><div class="party-role">COMPRADOR:</div><p>${partyLine(pb,'COMPRADOR')}</p></div>
+    </div>
+    <p>As partes celebram o presente Contrato de Compra e Venda, nos termos dos arts. 481 a 532 do Código Civil (Lei nº 10.406/2002), mediante as seguintes cláusulas:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto</div><div class="clausula-body">
+      <p>1.1. O VENDEDOR vende ao COMPRADOR, em caráter irrevogável e irretratável: <strong>${obj.desc}</strong></p>
+      <p>1.2. O bem objeto deste contrato é vendido no estado em que se encontra, sendo de responsabilidade do COMPRADOR verificar suas condições antes da assinatura.</p>
+      ${obj.entregaveis ? `<p>1.3. Características adicionais: ${obj.entregaveis}</p>` : ''}
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Do Preço e Forma de Pagamento</div><div class="clausula-body">
+      <p>2.1. O preço total da venda é de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), pago <strong>${val.forma}</strong>.</p>
+      <p>2.2. O pagamento será efetuado mediante: <strong>${val.banco || 'dados a serem informados pelo VENDEDOR'}</strong>.</p>
+      ${val.cond ? `<p>2.3. Condições especiais: ${val.cond}</p>` : ''}
+      <p>${val.cond ? '2.4.' : '2.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de <strong>${val.juros}</strong> ao mês.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Da Entrega e Transferência</div><div class="clausula-body">
+      <p>3.1. O bem será entregue ao COMPRADOR em <strong>${obj.fim !== 'indeterminado' ? obj.fim : obj.inicio}</strong>, no local: <strong>${obj.local || 'a ser acordado entre as partes'}</strong>.</p>
+      <p>3.2. A transferência definitiva da propriedade ocorrerá após o pagamento integral do preço. Até lá, o bem permanece em nome do VENDEDOR.</p>
+      <p>3.3. As despesas de transferência, registro e tributos incidentes sobre a transação serão de responsabilidade do <strong>COMPRADOR</strong>, salvo acordo em contrário.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Das Garantias</div><div class="clausula-body">
+      <p>4.1. O VENDEDOR garante que o bem está livre e desembaraçado de quaisquer ônus, dívidas, hipotecas ou restrições, respondendo por eventuais vícios ocultos nos termos do art. 441 do Código Civil.</p>
+      <p>4.2. O VENDEDOR responde pela evicção, nos termos dos arts. 447 a 457 do Código Civil.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Fica eleito o foro de <strong>${jur.foro}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">VENDEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMPRADOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ PARCERIA COMERCIAL ════
+  if (t === 'parceria' || t === 'plano_parceria') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular de Parceria Comercial · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">PARCEIRO A:</div><p>${partyLine(pa,'PARCEIRO A')}</p></div>
+      <div class="party"><div class="party-role">PARCEIRO B:</div><p>${partyLine(pb,'PARCEIRO B')}</p></div>
+    </div>
+    <p>As partes celebram o presente Acordo de Parceria Comercial, comprometendo-se a atuar de forma colaborativa para os fins descritos neste instrumento:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto da Parceria</div><div class="clausula-body">
+      <p>1.1. As partes estabelecem parceria comercial para: <strong>${obj.desc}</strong></p>
+      ${obj.entregaveis ? `<p>1.2. Escopo e metas: ${obj.entregaveis}</p>` : ''}
+      <p>${obj.entregaveis ? '1.3.' : '1.2.'} A parceria vigorará ${vigText}, com início em <strong>${obj.inicio}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Das Obrigações e Responsabilidades</div><div class="clausula-body">
+      <p>2.1. Compete ao PARCEIRO A: ${obj.obrig_a || 'aportar recursos, conhecimento e infraestrutura conforme acordado'}.</p>
+      <p>2.2. Compete ao PARCEIRO B: ${obj.obrig_b || 'executar as atividades operacionais e de relacionamento conforme acordado'}.</p>
+      <p>2.3. As decisões estratégicas serão tomadas em conjunto, mediante acordo entre as partes.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Da Remuneração e Divisão de Resultados</div><div class="clausula-body">
+      <p>3.1. Os resultados financeiros da parceria serão divididos na proporção de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), conforme <strong>${val.forma}</strong>.</p>
+      <p>3.2. Os pagamentos serão realizados mediante: <strong>${val.banco || 'acordo entre as partes'}</strong>, com vencimento <strong>${val.venc || 'conforme apuração dos resultados'}</strong>.</p>
+      ${val.cond ? `<p>3.3. Condições especiais: ${val.cond}</p>` : ''}
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Da Confidencialidade</div><div class="clausula-body">
+      <p>4.1. As partes comprometem-se a manter sigilo sobre todas as informações estratégicas, comerciais e financeiras obtidas em razão desta parceria, durante toda a vigência e por 2 (dois) anos após o encerramento.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula V — Da Rescisão</div><div class="clausula-body">
+      <p>5.1. A parceria poderá ser encerrada por qualquer das partes mediante aviso prévio de <strong>${jur.rescisao}</strong>, devendo as obrigações em curso ser finalizadas.</p>
+      <p>5.2. O encerramento imotivado implicará multa de <strong>${jur.multa_resc}</strong>.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Este instrumento não gera vínculo societário entre as partes. Fica eleito o foro de <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARCEIRO A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARCEIRO B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ COMISSÃO / REPRESENTAÇÃO COMERCIAL ════
+  if (t === 'comissao') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular de Representação Comercial e Comissão · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">COMITENTE (Empresa):</div><p>${partyLine(pa,'COMITENTE')}</p></div>
+      <div class="party"><div class="party-role">COMISSIONADO (Representante):</div><p>${partyLine(pb,'COMISSIONADO')}</p></div>
+    </div>
+    <p>As partes celebram o presente Contrato de Representação Comercial, nos termos da Lei nº 4.886/1965 e alterações:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto</div><div class="clausula-body">
+      <p>1.1. O COMISSIONADO fica autorizado a representar comercialmente o COMITENTE na venda de: <strong>${obj.desc}</strong></p>
+      <p>1.2. Área de atuação: <strong>${obj.local || 'todo o território nacional'}</strong>.</p>
+      <p>1.3. A representação vigorará ${vigText}, a partir de <strong>${obj.inicio}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Da Comissão</div><div class="clausula-body">
+      <p>2.1. O COMISSIONADO receberá comissão de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}) ou equivalente a <strong>${val.forma}</strong> sobre as vendas realizadas.</p>
+      <p>2.2. O pagamento das comissões ocorrerá <strong>${val.venc || 'mensalmente até o 10º dia do mês subsequente'}</strong>, mediante: <strong>${val.banco || 'dados bancários do COMISSIONADO'}</strong>.</p>
+      <p>2.3. As comissões são devidas no momento da efetivação do pagamento pelo cliente final ao COMITENTE.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Das Obrigações do Comissionado</div><div class="clausula-body">
+      <p>3.1. O COMISSIONADO compromete-se a: (a) promover ativamente as vendas dos produtos/serviços do COMITENTE; (b) manter relacionamento ético com os clientes; (c) prestar contas regularmente ao COMITENTE; (d) não representar empresas concorrentes sem autorização prévia.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Da Rescisão</div><div class="clausula-body">
+      <p>4.1. O contrato poderá ser rescindido por qualquer das partes mediante aviso prévio de <strong>${jur.rescisao}</strong>, nos termos do art. 34 da Lei nº 4.886/1965.</p>
+      <p>4.2. Em caso de rescisão sem justa causa pelo COMITENTE, será devida indenização ao COMISSIONADO conforme legislação vigente.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Regido pela Lei nº 4.886/1965 e Código Civil. Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">COMITENTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMISSIONADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ VISTORIA DO IMÓVEL ════
+  if (t === 'vistoria') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Termo de Vistoria de Imóvel · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Identificação</div>
+      <div class="party"><div class="party-role">LOCADOR / PROPRIETÁRIO:</div><p>${partyLine(pa,'LOCADOR')}</p></div>
+      <div class="party"><div class="party-role">LOCATÁRIO / OCUPANTE:</div><p>${partyLine(pb,'LOCATÁRIO')}</p></div>
+    </div>
+    <div class="clausula"><div class="clausula-title">1. Identificação do Imóvel</div><div class="clausula-body">
+      <p>Imóvel localizado em: <strong>${obj.desc}</strong></p>
+      <p>Data da vistoria: <strong>${obj.inicio}</strong> | Tipo: <strong>${obj.local || 'Residencial'}</strong></p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">2. Estado de Conservação Geral</div><div class="clausula-body">
+      <p>As partes declaram que o imóvel foi vistoriado e se encontra nas seguintes condições:</p>
+      <p><strong>Paredes e pintura:</strong> _____________________________________________</p>
+      <p><strong>Pisos e revestimentos:</strong> _____________________________________________</p>
+      <p><strong>Janelas e portas:</strong> _____________________________________________</p>
+      <p><strong>Instalações elétricas:</strong> _____________________________________________</p>
+      <p><strong>Instalações hidráulicas:</strong> _____________________________________________</p>
+      <p><strong>Telhado / Laje:</strong> _____________________________________________</p>
+      <p><strong>Área externa / Jardim:</strong> _____________________________________________</p>
+      ${obj.entregaveis ? `<p><strong>Observações adicionais:</strong> ${obj.entregaveis}</p>` : ''}
+    </div></div>
+    <div class="clausula"><div class="clausula-title">3. Itens Entregues</div><div class="clausula-body">
+      <p>Chaves: _______ cópias | Controle de portão: _______ | Outros: _____________</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">4. Declaração das Partes</div><div class="clausula-body">
+      <p>As partes declaram que as informações acima correspondem ao estado real do imóvel na data da vistoria, comprometendo-se o LOCATÁRIO a devolvê-lo nas mesmas condições ao final da locação, salvo desgaste natural pelo uso.</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR / PROPRIETÁRIO</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO / OCUPANTE</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ NOTIFICAÇÃO DE DESOCUPAÇÃO ════
+  if (t === 'notif_desocupacao') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Notificação Extrajudicial de Desocupação · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Identificação</div>
+      <div class="party"><div class="party-role">NOTIFICANTE (Proprietário/Locador):</div><p>${partyLine(pa,'NOTIFICANTE')}</p></div>
+      <div class="party"><div class="party-role">NOTIFICADO (Locatário/Ocupante):</div><p>${partyLine(pb,'NOTIFICADO')}</p></div>
+    </div>
+    <div class="clausula"><div class="clausula-title">Da Notificação</div><div class="clausula-body">
+      <p>O NOTIFICANTE, por meio do presente instrumento, notifica formalmente o NOTIFICADO para que desocupe o imóvel situado em: <strong>${obj.desc}</strong>, no prazo de <strong>${jur.rescisao || '30 (trinta) dias'}</strong>, contados do recebimento desta notificação.</p>
+      <p>Motivo da notificação: <strong>${obj.local || 'encerramento do contrato de locação'}</strong>.</p>
+      ${obj.entregaveis ? `<p>Observações: ${obj.entregaveis}</p>` : ''}
+      <p>Caso o imóvel não seja desocupado no prazo estipulado, o NOTIFICANTE adotará as medidas judiciais cabíveis, incluindo ação de despejo, com todos os ônus decorrentes ao NOTIFICADO, nos termos da Lei nº 8.245/1991.</p>
+      <p>Esta notificação serve como prova formal do aviso prévio legalmente exigido.</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ ACORDO DE INADIMPLÊNCIA ════
+  if (t === 'acordo_inadimpl') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Acordo de Regularização de Débito Locatício · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">LOCADOR (CREDOR):</div><p>${partyLine(pa,'LOCADOR')}</p></div>
+      <div class="party"><div class="party-role">LOCATÁRIO (DEVEDOR):</div><p>${partyLine(pb,'LOCATÁRIO')}</p></div>
+    </div>
+    <p>As partes celebram o presente Acordo de Regularização, mediante as seguintes condições:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Débito</div><div class="clausula-body">
+      <p>1.1. O LOCATÁRIO reconhece o débito de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), referente a: <strong>${obj.desc}</strong>.</p>
+      <p>1.2. As partes concordam que o valor acima representa o total da dívida, incluindo aluguéis, encargos, multas e juros devidos até <strong>${obj.inicio}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Do Acordo de Pagamento</div><div class="clausula-body">
+      <p>2.1. O LOCATÁRIO compromete-se a quitar o débito <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante: <strong>${val.banco || 'dados bancários do LOCADOR'}</strong>.</p>
+      <p>2.2. O LOCATÁRIO compromete-se ainda a manter os aluguéis futuros em dia, sob pena de rescisão imediata deste acordo.</p>
+      <p>2.3. O descumprimento deste acordo ensejará a retomada imediata das medidas judiciais pelo LOCADOR, sem necessidade de nova notificação.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Da Quitação Condicionada</div><div class="clausula-body">
+      <p>3.1. O LOCADOR concede ao LOCATÁRIO a quitação condicionada ao cumprimento integral deste acordo. O descumprimento de qualquer parcela tornará o acordo sem efeito, restaurando integralmente o débito original.</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ CARTA DE APRESENTAÇÃO ════
+  if (t === 'carta_apres') {
+    return `${cabecalho}
+    <div class="doc-subtitle">${dateStr}</div>
+    <div style="margin-bottom:24px;">
+      <p><strong>${pa.nome}</strong>${pa.prof ? ' — ' + pa.prof : ''}</p>
+      ${pa.end ? `<p>${pa.end}</p>` : ''}
+      ${pa.tel ? `<p>Tel.: ${pa.tel}</p>` : ''}
+      ${pa.email ? `<p>E-mail: ${pa.email}</p>` : ''}
+    </div>
+    <div style="margin-bottom:24px;">
+      <p>A/C: <strong>${pb.nome || 'Responsável de Recursos Humanos'}</strong></p>
+      ${pb.end ? `<p>${pb.end}</p>` : ''}
+    </div>
+    <p><strong>Assunto: ${obj.desc || 'Carta de Apresentação Profissional'}</strong></p><br>
+    <div class="clausula"><div class="clausula-body">
+      <p>Prezado(a) ${pb.nome || 'Senhor(a)'},</p>
+      <p>Venho, por meio desta carta, apresentar-me como candidato(a) à oportunidade em sua empresa. Sou <strong>${pa.nome}</strong>, ${pa.prof ? pa.prof + ', ' : ''}com ${obj.local || 'experiência na área'}.</p>
+      <p>${obj.obrig_a || 'Ao longo da minha trajetória profissional, desenvolvi competências que acredito serem relevantes para contribuir com os objetivos de sua organização. Tenho interesse genuíno em fazer parte de sua equipe e acredito que meu perfil se alinha aos valores e necessidades da empresa.'}</p>
+      <p>${obj.obrig_b || 'Coloco-me à disposição para uma entrevista, quando poderemos conversar mais detalhadamente sobre como posso agregar valor à sua equipe.'}</p>
+      <p>Agradeço a atenção dispensada e aguardo um retorno.</p>
+    </div></div>
+    <div style="margin-top:40px;">
+      <p>Atenciosamente,</p><br>
+      <div class="sig-line" style="max-width:300px;"></div>
+      <p><strong>${pa.nome}</strong></p>
+      ${pa.prof ? `<p>${pa.prof}</p>` : ''}
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ CARTA DE DEMISSÃO ════
+  if (t === 'carta_demissao') {
+    return `${cabecalho}
+    <div class="doc-subtitle">${dateStr}</div>
+    <div style="margin-bottom:24px;">
+      <p>De: <strong>${pa.nome}</strong>${pa.prof ? ' — ' + pa.prof : ''}</p>
+      <p>Para: <strong>${pb.nome || 'Departamento de Recursos Humanos'}</strong></p>
+    </div>
+    <p><strong>Assunto: Pedido de Demissão</strong></p><br>
+    <div class="clausula"><div class="clausula-body">
+      <p>Prezado(a) ${pb.nome || 'Senhor(a)'},</p>
+      <p>Venho, por meio desta carta, formalizar meu pedido de demissão do cargo de <strong>${pa.prof || 'cargo que ocupo'}</strong> nesta empresa, a partir desta data.</p>
+      <p>${obj.desc || 'Esta decisão foi tomada após cuidadosa reflexão sobre minha trajetória profissional e objetivos de carreira. Agradeço imensamente pela oportunidade de crescimento e aprendizado proporcionados durante meu período na empresa.'}</p>
+      <p>Comprometo-me a cumprir o aviso prévio de <strong>${jur.rescisao || '30 (trinta) dias'}</strong>, conforme previsto em contrato e na legislação trabalhista vigente, garantindo a plena transição das minhas responsabilidades.</p>
+      <p>Agradeço a todos os colegas e lideranças pela convivência e peço que confirmem o recebimento desta carta.</p>
+    </div></div>
+    <div style="margin-top:40px;">
+      <p>Respeitosamente,</p><br>
+      <div class="sig-line" style="max-width:300px;"></div>
+      <p><strong>${pa.nome}</strong></p>
+      <p>CPF: ${pa.doc}</p>
+      <p>${dateStr}</p>
+    </div>
+    <div style="margin-top:30px;padding:16px;border:1px solid #ddd;border-radius:4px;">
+      <p><strong>Ciente:</strong></p><br>
+      <div class="sig-line" style="max-width:300px;"></div>
+      <p>${pb.nome || 'Representante da Empresa'}</p>
+      <p>Data: ___/___/______</p>
+    </div>
+    ${aviso}`;
+  }
+
+  // ════ DECLARAÇÃO DE EXPERIÊNCIA ════
+  if (t === 'decl_experiencia') {
+    return `${cabecalho}
+    <div class="doc-subtitle">${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Dados da Empresa Declarante</div>
+      <div class="party"><div class="party-role">EMPRESA:</div><p>${partyLine(pa,'EMPRESA')}</p></div>
+    </div>
+    <div class="clausula"><div class="clausula-title">Declaração de Experiência Profissional</div><div class="clausula-body">
+      <p>Declaramos, para os devidos fins, que <strong>${pb.nome}</strong>, portador(a) do CPF nº <strong>${pb.doc}</strong>, prestou serviços a esta empresa no cargo/função de <strong>${pb.prof || obj.desc}</strong>, pelo período de <strong>${obj.inicio}</strong> a <strong>${obj.fim !== 'indeterminado' ? obj.fim : 'atual'}</strong>.</p>
+      <p>Durante o período mencionado, o(a) profissional demonstrou: <strong>${obj.obrig_b || 'competência técnica, comprometimento e responsabilidade no exercício de suas funções'}</strong>.</p>
+      ${obj.entregaveis ? `<p>Atividades desenvolvidas: ${obj.entregaveis}</p>` : ''}
+      <p>Esta declaração é fornecida a pedido do(a) interessado(a) para os fins que se fizerem necessários, sendo verdadeiras todas as informações aqui prestadas.</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">Representante Legal</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ ESTÁGIO ════
+  if (t === 'estagio') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Termo de Compromisso de Estágio · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">EMPRESA CONCEDENTE:</div><p>${partyLine(pa,'EMPRESA CONCEDENTE')}</p></div>
+      <div class="party"><div class="party-role">ESTAGIÁRIO(A):</div><p>${partyLine(pb,'ESTAGIÁRIO')}</p></div>
+    </div>
+    <p>As partes celebram o presente Termo de Compromisso de Estágio, nos termos da Lei nº 11.788/2008 (Lei do Estágio), mediante as seguintes condições:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Estágio</div><div class="clausula-body">
+      <p>1.1. A EMPRESA CONCEDENTE recebe o(a) ESTAGIÁRIO(A) para realização de estágio na área de: <strong>${obj.desc}</strong></p>
+      <p>1.2. O estágio terá duração de <strong>${vigText}</strong>, com início em <strong>${obj.inicio}</strong> e término em <strong>${obj.fim}</strong>, conforme art. 11 da Lei nº 11.788/2008.</p>
+      <p>1.3. Carga horária: <strong>${obj.local || '6 horas diárias, 30 horas semanais'}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Da Bolsa-Auxílio</div><div class="clausula-body">
+      <p>2.1. Será paga ao(à) ESTAGIÁRIO(A) bolsa-auxílio no valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, além de auxílio-transporte conforme legislação vigente.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Das Obrigações</div><div class="clausula-body">
+      <p>3.1. A EMPRESA CONCEDENTE compromete-se a: oferecer atividades compatíveis com a área de formação do estagiário; designar supervisor responsável; garantir condições de segurança; conceder recesso de 30 dias a cada 12 meses.</p>
+      <p>3.2. O(A) ESTAGIÁRIO(A) compromete-se a: cumprir a carga horária estabelecida; zelar pelo sigilo das informações da empresa; cumprir as normas internas da empresa.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>O presente estágio não gera vínculo empregatício, nos termos do art. 3º da Lei nº 11.788/2008. Foro: <strong>${jur.foro}</strong>.</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">EMPRESA CONCEDENTE</div><div class="sig-doc">CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">ESTAGIÁRIO(A)</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ NOTA SIMPLES DE SERVIÇO ════
+  if (t === 'nota_servico') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Nota de Prestação de Serviço · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Dados</div>
+      <div class="party"><div class="party-role">PRESTADOR:</div><p>${partyLine(pa,'PRESTADOR')}</p></div>
+      <div class="party"><div class="party-role">TOMADOR:</div><p>${partyLine(pb,'TOMADOR')}</p></div>
+    </div>
+    <div class="clausula"><div class="clausula-title">Descrição do Serviço</div><div class="clausula-body">
+      <p><strong>Serviço prestado:</strong> ${obj.desc}</p>
+      <p><strong>Data de execução:</strong> ${obj.inicio}</p>
+      ${obj.local ? `<p><strong>Local:</strong> ${obj.local}</p>` : ''}
+      ${obj.entregaveis ? `<p><strong>Detalhes:</strong> ${obj.entregaveis}</p>` : ''}
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Valor</div><div class="clausula-body">
+      <p><strong>Valor total: R$ ${val.total}</strong> (${valorExtenso(val.total)})</p>
+      <p>Forma de pagamento: ${val.forma} | Vencimento: ${val.venc}</p>
+      ${val.banco ? `<p>Dados para pagamento: ${val.banco}</p>` : ''}
+    </div></div>
+    <div class="clausula"><div class="clausula-body">
+      <p>Declaro ter prestado os serviços acima descritos e que as informações são verdadeiras.</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PRESTADOR DE SERVIÇO</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">TOMADOR — Ciente</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ LGPD / PRIVACIDADE / TERMOS DE USO ════
+  if (['lgpd_termo','politica_priv','termo_uso'].includes(t)) {
+    const titulos = {
+      lgpd_termo: 'Termo de Consentimento para Tratamento de Dados Pessoais',
+      politica_priv: 'Política de Privacidade',
+      termo_uso: 'Termos de Uso da Plataforma',
+    };
+    return `${cabecalho}
+    <div class="doc-subtitle">${titulos[t]} · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Responsável pelo Tratamento</div>
+      <div class="party"><div class="party-role">CONTROLADOR DOS DADOS:</div><p>${partyLine(pa,'EMPRESA/RESPONSÁVEL')}</p></div>
+    </div>
+    ${t === 'lgpd_termo' ? `
+    <div class="clausula"><div class="clausula-title">1. Finalidade do Tratamento</div><div class="clausula-body">
+      <p>O(A) CONTROLADOR(A) acima identificado(a) trata dados pessoais do titular para as seguintes finalidades: <strong>${obj.desc}</strong></p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">2. Dados Coletados</div><div class="clausula-body">
+      <p>Serão coletados os seguintes dados: <strong>${obj.entregaveis || 'nome, e-mail, CPF e demais dados necessários para a prestação do serviço'}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">3. Direitos do Titular</div><div class="clausula-body">
+      <p>Nos termos da Lei nº 13.709/2018 (LGPD), o titular tem direito a: (a) confirmação de tratamento; (b) acesso aos dados; (c) correção; (d) anonimização ou eliminação; (e) portabilidade; (f) informação sobre compartilhamento; (g) revogação do consentimento a qualquer tempo.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">4. Prazo de Conservação</div><div class="clausula-body">
+      <p>Os dados serão mantidos pelo prazo de <strong>${vigText}</strong> ou pelo tempo necessário ao cumprimento das finalidades descritas, exceto quando houver obrigação legal de guarda por prazo superior.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">5. Consentimento</div><div class="clausula-body">
+      <p>O titular declara ter lido e compreendido este termo, consentindo livremente com o tratamento de seus dados pessoais conforme descrito acima, nos termos do art. 8º da LGPD.</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome || 'TITULAR DOS DADOS'}</div><div class="sig-role">TITULAR</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTROLADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+      </div>
+    </div>` : `
+    <div class="clausula"><div class="clausula-title">1. Sobre ${t === 'politica_priv' ? 'a Política de Privacidade' : 'os Termos de Uso'}</div><div class="clausula-body">
+      <p>Este documento regula: <strong>${obj.desc}</strong></p>
+      <p>Vigência: ${vigText} | Última atualização: ${dateStr}</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">2. ${t === 'politica_priv' ? 'Dados Coletados e Finalidade' : 'Uso da Plataforma'}</div><div class="clausula-body">
+      <p>${obj.obrig_a || (t === 'politica_priv' ? 'Coletamos dados necessários para prestação dos serviços, conforme a Lei nº 13.709/2018 (LGPD).' : 'O uso da plataforma implica aceitação integral destes termos.')}</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">3. Responsabilidades</div><div class="clausula-body">
+      <p>${obj.obrig_b || 'As partes comprometem-se a respeitar a legislação aplicável e as disposições deste documento.'}</p>
+      ${obj.entregaveis ? `<p>${obj.entregaveis}</p>` : ''}
+    </div></div>
+    <div class="clausula"><div class="clausula-title">4. Contato e Atualizações</div><div class="clausula-body">
+      <p>Para dúvidas: <strong>${pa.email || 'contato a ser informado'}</strong>. Este documento pode ser atualizado a qualquer momento, com aviso prévio aos usuários.</p>
+    </div></div>`}
+    ${aviso}`;
+  }
+
+  // ════ NOTIFICAÇÃO EXTRAJUDICIAL ════
+  if (t === 'notif_extra') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Notificação Extrajudicial · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Identificação das Partes</div>
+      <div class="party"><div class="party-role">NOTIFICANTE:</div><p>${partyLine(pa,'NOTIFICANTE')}</p></div>
+      <div class="party"><div class="party-role">NOTIFICADO:</div><p>${partyLine(pb,'NOTIFICADO')}</p></div>
+    </div>
+    <div class="clausula"><div class="clausula-title">Da Notificação</div><div class="clausula-body">
+      <p>O(A) NOTIFICANTE, por meio do presente instrumento, notifica formalmente o(a) NOTIFICADO(A) a respeito de: <strong>${obj.desc}</strong></p>
+      <p>${obj.obrig_a || 'O NOTIFICADO deverá adotar as providências cabíveis no prazo de <strong>' + (jur.rescisao || '15 dias') + '</strong> a contar do recebimento desta notificação.'}</p>
+      ${obj.entregaveis ? `<p>${obj.entregaveis}</p>` : ''}
+      <p>O não atendimento desta notificação no prazo estipulado implicará a adoção das medidas legais cabíveis, incluindo as de ordem judicial, com todos os ônus decorrentes ao NOTIFICADO.</p>
+      <p>Esta notificação serve como prova do conhecimento formal pelo NOTIFICADO sobre os fatos e exigências aqui descritos.</p>
+      ${jur.extra ? `<p>${jur.extra}</p>` : ''}
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ ACORDO AMIGÁVEL ════
+  if (t === 'acordo_amigavel') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento de Acordo Amigável entre Partes · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">PARTE A:</div><p>${partyLine(pa,'PARTE A')}</p></div>
+      <div class="party"><div class="party-role">PARTE B:</div><p>${partyLine(pb,'PARTE B')}</p></div>
+    </div>
+    <p>As partes, de comum acordo e sem necessidade de intervenção judicial, celebram o presente instrumento de composição amigável:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto do Acordo</div><div class="clausula-body">
+      <p>1.1. As partes acordam a resolução amigável relativa a: <strong>${obj.desc}</strong></p>
+      <p>1.2. Ficam acordadas as seguintes obrigações: ${obj.obrig_a && obj.obrig_b ? `<br>— PARTE A: ${obj.obrig_a}<br>— PARTE B: ${obj.obrig_b}` : obj.entregaveis || 'conforme negociado entre as partes'}.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Do Pagamento</div><div class="clausula-body">
+      <p>2.1. Fica acordado o pagamento de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante: <strong>${val.banco || 'dados bancários a informar'}</strong>.</p>
+      <p>2.2. O descumprimento das obrigações acordadas acarretará multa de <strong>${val.multa}</strong> sobre o valor em atraso.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Da Quitação</div><div class="clausula-body">
+      <p>3.1. O cumprimento integral deste acordo implica plena, geral e irrevogável quitação recíproca entre as partes, relativamente ao objeto aqui descrito, nada mais tendo a reclamar uma da outra a qualquer título.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ CONTRATO SOCIAL ════
+  if (t === 'contrato_social') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Contrato Social de Sociedade Limitada · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Sócios</div>
+      <div class="party"><div class="party-role">SÓCIO ADMINISTRADOR:</div><p>${partyLine(pa,'SÓCIO ADMINISTRADOR')}</p></div>
+      <div class="party"><div class="party-role">SÓCIO:</div><p>${partyLine(pb,'SÓCIO')}</p></div>
+    </div>
+    <p>Os sócios acima qualificados constituem, por este instrumento, uma Sociedade Limitada, regida pelo Código Civil (arts. 1.052 a 1.087), mediante as seguintes cláusulas:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Da Denominação e Sede</div><div class="clausula-body">
+      <p>1.1. A sociedade será denominada <strong>${obj.desc}</strong>, com sede em <strong>${obj.local || 'endereço a ser registrado'}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Do Objeto Social</div><div class="clausula-body">
+      <p>2.1. A sociedade tem por objeto: <strong>${obj.obrig_a || obj.entregaveis || 'atividades a serem descritas conforme CNAE'}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Do Capital Social</div><div class="clausula-body">
+      <p>3.1. O capital social é de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), dividido entre os sócios:</p>
+      <p>— ${pa.nome}: R$ ____________ (_____%)</p>
+      <p>— ${pb.nome}: R$ ____________ (_____%)</p>
+      <p>3.2. O capital social está totalmente subscrito e integralizado nesta data.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Da Administração</div><div class="clausula-body">
+      <p>4.1. A sociedade será administrada pelo(a) sócio(a) <strong>${pa.nome}</strong>, que terá poderes para praticar todos os atos de gestão necessários ao funcionamento da empresa.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula V — Da Distribuição de Lucros</div><div class="clausula-body">
+      <p>5.1. Os lucros e resultados serão distribuídos proporcionalmente à participação de cada sócio no capital social, após apuração contábil.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula VI — Da Retirada e Exclusão de Sócios</div><div class="clausula-body">
+      <p>6.1. Qualquer sócio poderá retirar-se da sociedade mediante aviso prévio de <strong>${jur.rescisao}</strong>, apurando-se seus haveres na forma da lei.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Regido pelo Código Civil. Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO ADMINISTRADOR</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ ACORDO ENTRE SÓCIOS ════
+  if (t === 'acordo_socios') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Acordo de Sócios · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Sócios</div>
+      <div class="party"><div class="party-role">SÓCIO A:</div><p>${partyLine(pa,'SÓCIO A')}</p></div>
+      <div class="party"><div class="party-role">SÓCIO B:</div><p>${partyLine(pb,'SÓCIO B')}</p></div>
+    </div>
+    <p>Os sócios celebram o presente Acordo para regular direitos e obrigações societárias:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto</div><div class="clausula-body">
+      <p>1.1. Este acordo regula: <strong>${obj.desc}</strong></p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Das Quotas e Participações</div><div class="clausula-body">
+      <p>2.1. As quotas sociais são distribuídas: SÓCIO A: _____% | SÓCIO B: _____%.</p>
+      <p>2.2. Qualquer transferência de quotas requer aprovação prévia e por escrito do outro sócio.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Das Obrigações dos Sócios</div><div class="clausula-body">
+      <p>3.1. SÓCIO A: ${obj.obrig_a || 'responsável pela área de gestão e administração'}.</p>
+      <p>3.2. SÓCIO B: ${obj.obrig_b || 'responsável pela área operacional e comercial'}.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Das Decisões</div><div class="clausula-body">
+      <p>4.1. Decisões estratégicas exigem aprovação de ambos os sócios. Decisões operacionais podem ser tomadas individualmente dentro das respectivas áreas de responsabilidade.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula V — Da Saída de Sócio</div><div class="clausula-body">
+      <p>5.1. Em caso de saída, o sócio retirante deverá oferecer suas quotas primeiramente ao(s) outro(s) sócio(s), pelo valor patrimonial apurado. Prazo de exercício do direito de preferência: ${jur.rescisao}.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO A</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO B</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ TERMO DE INVESTIMENTO ════
+  if (t === 'termo_invest') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Instrumento Particular de Investimento · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Qualificação das Partes</div>
+      <div class="party"><div class="party-role">INVESTIDOR:</div><p>${partyLine(pa,'INVESTIDOR')}</p></div>
+      <div class="party"><div class="party-role">EMPRESA INVESTIDA:</div><p>${partyLine(pb,'EMPRESA')}</p></div>
+    </div>
+    <p>As partes celebram o presente Termo de Investimento nos seguintes termos:</p>
+    <div class="clausula"><div class="clausula-title">Cláusula I — Do Investimento</div><div class="clausula-body">
+      <p>1.1. O INVESTIDOR aporta na EMPRESA o valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), destinado a: <strong>${obj.desc}</strong></p>
+      <p>1.2. O aporte será realizado ${val.forma}, mediante: <strong>${val.banco || 'transferência bancária'}</strong>.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula II — Da Contrapartida</div><div class="clausula-body">
+      <p>2.1. Em contrapartida ao investimento, a EMPRESA oferece: <strong>${obj.obrig_b || 'participação societária / retorno financeiro conforme acordado'}</strong>.</p>
+      <p>2.2. A forma de retorno do investimento: ${val.cond || 'conforme negociação entre as partes'}.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula III — Das Obrigações da Empresa</div><div class="clausula-body">
+      <p>3.1. A EMPRESA compromete-se a: (a) utilizar os recursos exclusivamente para as finalidades descritas; (b) prestar contas regularmente ao INVESTIDOR; (c) não alienar ativos estratégicos sem anuência do INVESTIDOR.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">Cláusula IV — Do Prazo</div><div class="clausula-body">
+      <p>4.1. Este instrumento vigorará ${vigText}, podendo ser renovado por acordo entre as partes.</p>
+    </div></div>
+    ${extraClauses}
+    <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+      <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">INVESTIDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">EMPRESA INVESTIDA</div><div class="sig-doc">CNPJ: ${pb.doc}</div></div>
+      </div>
+      <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ ABERTURA DE EMPRESA ════
+  if (t === 'abertura_empresa') {
+    return `${cabecalho}
+    <div class="doc-subtitle">Requerimento de Constituição de Empresa · ${dateStr}</div>
+    <div class="parties-block">
+      <div class="parties-title">Requerente</div>
+      <div class="party"><div class="party-role">SÓCIO / TITULAR:</div><p>${partyLine(pa,'REQUERENTE')}</p></div>
+      ${pb.nome && pb.nome !== '—' ? `<div class="party"><div class="party-role">SÓCIO 2:</div><p>${partyLine(pb,'SÓCIO 2')}</p></div>` : ''}
+    </div>
+    <div class="clausula"><div class="clausula-title">1. Dados da Empresa a Constituir</div><div class="clausula-body">
+      <p><strong>Nome Empresarial:</strong> ${obj.desc}</p>
+      <p><strong>Tipo jurídico:</strong> ${obj.local || 'Sociedade Limitada (LTDA) / MEI / ME'}</p>
+      <p><strong>Endereço da sede:</strong> ${pa.end || 'a preencher'}</p>
+      <p><strong>Capital social:</strong> R$ ${val.total} (${valorExtenso(val.total)})</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">2. Objeto Social (Atividade)</div><div class="clausula-body">
+      <p>${obj.obrig_a || obj.entregaveis || 'Descrição das atividades a serem exercidas — consulte o CNAE correspondente.'}</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-title">3. Administração</div><div class="clausula-body">
+      <p>O(A) administrador(a) da empresa será: <strong>${pa.nome}</strong>, responsável pela representação legal e gestão do negócio.</p>
+    </div></div>
+    <div class="clausula"><div class="clausula-body">
+      <p><em>⚠️ Este documento é um modelo de referência para organização das informações. Para constituição legal da empresa, registre o contrato social na Junta Comercial do seu estado ou utilize o Portal do Empreendedor (MEI/ME).</em></p>
+    </div></div>
+    <div class="signatures-block">
+      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="sig-grid">
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">REQUERENTE / SÓCIO</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
+        ${pb.nome && pb.nome !== '—' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
+      </div>
+    </div>${aviso}`;
+  }
+
+  // ════ TEMPLATE GENÉRICO MELHORADO ════
+  return `${cabecalho}
+  <div class="doc-subtitle">Instrumento Particular · ${dateStr}</div>
   <div class="parties-block">
     <div class="parties-title">Qualificação das Partes</div>
-    <div class="party">
-      <div class="party-role">${roleA}:</div>
-      <p>${partyLine(pa, roleA)}</p>
-    </div>
-    <div class="party">
-      <div class="party-role">${roleB}:</div>
-      <p>${partyLine(pb, roleB)}</p>
-    </div>
+    <div class="party"><div class="party-role">${roleA}:</div><p>${partyLine(pa,roleA)}</p></div>
+    <div class="party"><div class="party-role">${roleB}:</div><p>${partyLine(pb,roleB)}</p></div>
   </div>
+  <p>As partes acima qualificadas têm entre si justo e acordado o presente instrumento, que se regerá pelas seguintes cláusulas e condições:</p>
 
-  <p>As partes acima qualificadas, doravante denominadas simplesmente <strong>${roleA}</strong> e <strong>${roleB}</strong>, têm entre si, justo e contratado, o presente instrumento, que se regerá pelas seguintes cláusulas e condições:</p>
+  <div class="clausula"><div class="clausula-title">Cláusula I — Do Objeto</div><div class="clausula-body">
+    <p>1.1. O presente instrumento tem por objeto: <strong>${obj.desc}</strong></p>
+    ${obj.entregaveis ? `<p>1.2. Escopo: ${obj.entregaveis}</p>` : ''}
+    <p>${obj.entregaveis ? '1.3.' : '1.2.'} Prazo: ${vigText}, local: <strong>${obj.local || 'a ser definido'}</strong>.</p>
+  </div></div>
 
-  <div class="clausula">
-    <div class="clausula-title">Cláusula I — Do Objeto</div>
-    <div class="clausula-body">
-      <p>1.1. O presente instrumento tem por objeto: <strong>${obj.desc}</strong></p>
-      ${obj.entregaveis ? `<p>1.2. Entregáveis e escopo: ${obj.entregaveis}</p>` : ''}
-      <p>${obj.entregaveis ? '1.3.' : '1.2.'} O objeto será realizado ${vigText}, no local: <strong>${obj.local}</strong>.</p>
-    </div>
-  </div>
+  <div class="clausula"><div class="clausula-title">Cláusula II — Das Obrigações</div><div class="clausula-body">
+    <p>2.1. Compete ao <strong>${roleA}</strong>: ${obj.obrig_a}.</p>
+    <p>2.2. Compete ao <strong>${roleB}</strong>: ${obj.obrig_b}.</p>
+    <p>2.3. Ambas as partes comprometem-se a agir com boa-fé e transparência.</p>
+  </div></div>
 
-  <div class="clausula">
-    <div class="clausula-title">Cláusula II — Das Obrigações das Partes</div>
-    <div class="clausula-body">
-      <p>2.1. Compete ao <strong>${roleA}</strong>: ${obj.obrig_a}.</p>
-      <p>2.2. Compete ao <strong>${roleB}</strong>: ${obj.obrig_b}.</p>
-      <p>2.3. Ambas as partes se comprometem a agir com boa-fé, lealdade e transparência, comunicando imediatamente qualquer fato superveniente que possa afetar a execução deste instrumento.</p>
-    </div>
-  </div>
+  <div class="clausula"><div class="clausula-title">Cláusula III — Do Valor e Pagamento</div><div class="clausula-body">
+    <p>3.1. Valor: <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), pago <strong>${val.forma}</strong>, vencimento: <strong>${val.venc}</strong>.</p>
+    <p>3.2. Pagamento via: <strong>${val.banco || 'a ser informado'}</strong>.</p>
+    ${val.reajuste ? `<p>3.3. Reajuste anual: <strong>${val.reajuste}</strong>.</p>` : ''}
+    <p>${val.reajuste ? '3.4.' : '3.3.'} Multa por atraso: <strong>${val.multa}</strong> + juros de <strong>${val.juros}</strong>.</p>
+    ${val.cond ? `<p>Condições especiais: ${val.cond}.</p>` : ''}
+  </div></div>
 
-  <div class="clausula">
-    <div class="clausula-title">Cláusula III — Do Valor e Condições de Pagamento</div>
-    <div class="clausula-body">
-      <p>3.1. O valor total é de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), pago <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>.</p>
-      <p>3.2. O pagamento será efetuado mediante: <strong>${val.banco}</strong>.</p>
-      ${val.reajuste ? `<p>3.3. O valor será reajustado anualmente pelo índice <strong>${val.reajuste}</strong>.</p>` : ''}
-      <p>${val.reajuste ? '3.4.' : '3.3.'} O atraso no pagamento acarretará multa moratória de <strong>${val.multa}</strong> sobre o montante em atraso, acrescida de juros de <strong>${val.juros}</strong>, calculados pro rata die, nos termos do art. 395 do Código Civil.</p>
-      ${val.cond ? `<p>Condições especiais: ${val.cond}.</p>` : ''}
-    </div>
-  </div>
+  <div class="clausula"><div class="clausula-title">Cláusula IV — Da Vigência e Rescisão</div><div class="clausula-body">
+    <p>4.1. Vigência: ${vigText}.</p>
+    <p>4.2. Rescisão mediante aviso prévio de <strong>${jur.rescisao}</strong>.</p>
+    <p>4.3. Rescisão imotivada: multa de <strong>${jur.multa_resc}</strong>.</p>
+  </div></div>
 
-  <div class="clausula">
-    <div class="clausula-title">Cláusula IV — Da Vigência e Rescisão</div>
-    <div class="clausula-body">
-      <p>4.1. Este instrumento vigorará ${vigText}, podendo ser renovado mediante aditivo assinado por ambas as partes.</p>
-      <p>4.2. Qualquer das partes poderá rescindir este instrumento mediante notificação escrita com antecedência mínima de <strong>${jur.rescisao}</strong>.</p>
-      <p>4.3. A rescisão imotivada implicará o pagamento de multa rescisória de <strong>${jur.multa_resc}</strong> em favor da parte inocente, sem prejuízo de perdas e danos eventualmente apurados.</p>
-      <p>4.4. O presente instrumento poderá ser rescindido de pleno direito, sem necessidade de interpelação judicial, em caso de: (a) descumprimento de qualquer cláusula; (b) falência ou insolvência de qualquer das partes; (c) cessação das atividades.</p>
-    </div>
-  </div>
-
-  <div class="clausula">
-    <div class="clausula-title">Cláusula V — Da Responsabilidade Civil</div>
-    <div class="clausula-body">
-      <p>5.1. As partes respondem pelos danos diretos causados à outra parte em decorrência de ação ou omissão culposa ou dolosa, nos termos do art. 186 e seguintes do Código Civil.</p>
-      <p>5.2. Não serão imputados como inadimplemento os atrasos ou descumprimentos resultantes de caso fortuito ou força maior, conforme art. 393 do Código Civil, desde que comunicados formalmente no prazo de 48 (quarenta e oito) horas após o evento.</p>
-    </div>
-  </div>
+  <div class="clausula"><div class="clausula-title">Cláusula V — Da Responsabilidade</div><div class="clausula-body">
+    <p>5.1. As partes respondem pelos danos causados por ação ou omissão culposa ou dolosa, nos termos do art. 186 do Código Civil.</p>
+    <p>5.2. Força maior e caso fortuito excluem a responsabilidade, nos termos do art. 393 do Código Civil.</p>
+  </div></div>
 
   ${extraClauses}
 
-  <div class="clausula">
-    <div class="clausula-title">Cláusula ${roman[finalClauseN] || finalClauseN} — Das Disposições Gerais e Foro</div>
-    <div class="clausula-body">
-      <p>${finalClauseN}.1. O presente instrumento é regido pela legislação brasileira vigente, em especial o Código Civil (Lei nº 10.406/2002) e demais normas aplicáveis.</p>
-      <p>${finalClauseN}.2. As partes declaram ter lido, compreendido e concordado integralmente com todas as cláusulas, podendo ter sido assessoradas juridicamente, ou renunciado expressamente a tal assessoria.</p>
-      <p>${finalClauseN}.3. Qualquer alteração a este instrumento somente produzirá efeitos se formalizada em Termo Aditivo por escrito, assinado por ambas as partes.</p>
-      <p>${finalClauseN}.4. A tolerância de qualquer das partes em relação a eventuais descumprimentos não implicará novação, renúncia, modificação ou revogação de qualquer disposição deste instrumento.</p>
-      ${jur.extra ? `<p>${finalClauseN}.5. Disposições adicionais: ${jur.extra}.</p>` : ''}
-      <p>Fica eleito o foro <strong>${jur.foro}</strong>, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer dúvidas ou litígios oriundos deste instrumento, sendo a resolução de conflitos realizada <strong>${jur.resolucao}</strong>.</p>
-      <p>E, por estarem assim, justos e contratados, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma.</p>
-    </div>
-  </div>
+  <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
+    <p>${finalClauseN}.1. Regido pelo Código Civil (Lei nº 10.406/2002).</p>
+    <p>${finalClauseN}.2. Alterações somente por Termo Aditivo escrito.</p>
+    ${jur.extra ? `<p>${finalClauseN}.3. ${jur.extra}</p>` : ''}
+    <p>Foro: <strong>${jur.foro}</strong>, resolução <strong>${jur.resolucao}</strong>.</p>
+  </div></div>
 
   <div class="signatures-block">
     <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
     <div class="sig-grid">
-      <div class="sig-item">
-        <div class="sig-line"></div>
-        <div class="sig-name">${pa.nome}</div>
-        <div class="sig-role">${roleA}</div>
-        <div class="sig-doc">CPF/CNPJ: ${pa.doc}</div>
-      </div>
-      <div class="sig-item">
-        <div class="sig-line"></div>
-        <div class="sig-name">${pb.nome}</div>
-        <div class="sig-role">${roleB}</div>
-        <div class="sig-doc">CPF/CNPJ: ${pb.doc}</div>
-      </div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">${roleA}</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">${roleB}</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
     </div>
     <div class="witnesses-block">
       <div class="witnesses-title">Testemunhas</div>
-      <div class="sig-item">
-        <div class="sig-line"></div>
-        <div class="sig-name">${t1.nome}</div>
-        <div class="sig-doc">CPF: ${t1.doc}</div>
-      </div>
-      <div class="sig-item">
-        <div class="sig-line"></div>
-        <div class="sig-name">${t2.nome}</div>
-        <div class="sig-doc">CPF: ${t2.doc}</div>
-      </div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
     </div>
-  </div>`;
+  </div>
+  ${aviso}`;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -818,7 +1784,7 @@ function saveEdit() {
       t2: { nome:'___________________________', doc:'___________________' },
       obj: d.obj, val: d.val, jur: d.jur,
       roleA, roleB, vigText,
-      extraClauses: '', finalClauseN: 6, typeInfo: d.typeInfo,
+      extraClauses: '', finalClauseN: 6, typeInfo: d.typeInfo, type: d.type,
     });
   }
 
@@ -955,10 +1921,11 @@ function addPdfFooter(pdf, num) {
 //  ASSISTENTE IA
 // ════════════════════════════════════════════════════════════════
 
-const IA_SYSTEM = `Você é o assistente jurídico do DocFácil IA, plataforma brasileira de geração de documentos profissionais.
-Ajude os usuários com: dúvidas sobre contratos, explicação de cláusulas, indicação de documentos, informações sobre leis brasileiras.
-Responda sempre em português brasileiro. Seja claro, prático e objetivo. Cite leis quando relevante.
-Não emita aconselhamento jurídico formal — recomende advogado para casos específicos.`;
+const IA_SYSTEM = `Você é o assistente de escrita e preenchimento de documentos do DocFácil, plataforma de modelos de documentos profissionais.
+Ajude os usuários a: entender como preencher cada campo dos modelos, explicar o significado de termos nos documentos, sugerir qual modelo usar para cada situação, dar sugestões de redação.
+Responda sempre em português brasileiro. Seja claro, prático e objetivo.
+IMPORTANTE: Você NÃO presta assessoria ou consultoria jurídica. Se o usuário pedir orientação jurídica específica (ex: posso processar, tenho direito a, o que devo fazer legalmente), responda que não pode dar esse tipo de orientação e recomende consultar um advogado inscrito na OAB.
+Você pode explicar o que significam termos e cláusulas nos documentos, mas não pode recomendar ações jurídicas.`;
 
 function iaKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendIA(); } }
 
