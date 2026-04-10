@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DocFácil IA — Documentos Jurídicos Profissionais</title>
+<title>DocFácil IA — Modelos de Documentos Profissionais</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -67,7 +67,7 @@
 
   <section class="land-hero">
     <div class="land-hero-badge">🤖 Com Inteligência Artificial</div>
-    <h1 class="land-hero-title">Documentos jurídicos<br><span>profissionais em segundos</span></h1>
+    <h1 class="land-hero-title">Modelos de documentos<br><span>profissionais em segundos</span></h1>
     <p class="land-hero-sub">Contratos, declarações, recibos e muito mais.<br>Gere, edite e baixe em PDF gratuitamente.</p>
     <div class="land-hero-btns">
       <button class="land-btn-cta large" onclick="showAuth('register')">
@@ -91,11 +91,11 @@
     <div class="land-section-tag">Funcionalidades</div>
     <h2 class="land-section-title">Tudo que você precisa num só lugar</h2>
     <div class="land-features-grid">
-      <div class="land-feature"><div class="land-feature-icon">🤖</div><h3>Assistente IA</h3><p>Tire dúvidas jurídicas, peça revisões e gere documentos personalizados com inteligência artificial</p></div>
-      <div class="land-feature"><div class="land-feature-icon">📄</div><h3>40+ Documentos</h3><p>Contratos, declarações, recibos, acordos — todos com cláusulas jurídicas legítimas</p></div>
-      <div class="land-feature"><div class="land-feature-icon">⬇️</div><h3>Download em PDF</h3><p>Baixe seu documento formatado profissionalmente, pronto para imprimir ou assinar</p></div>
-      <div class="land-feature"><div class="land-feature-icon">✏️</div><h3>Edição completa</h3><p>Edite qualquer campo do documento após gerado, sem perder a formatação</p></div>
-      <div class="land-feature"><div class="land-feature-icon">☁️</div><h3>Salvo na nuvem</h3><p>Seus documentos ficam salvos com segurança. Acesse de qualquer dispositivo</p></div>
+      <div class="land-feature"><div class="land-feature-icon">🤖</div><h3>Assistente de Escrita IA</h3><p>Tire dúvidas sobre como preencher seus documentos, entenda o significado de cada campo e receba sugestões de redação</p></div>
+      <div class="land-feature"><div class="land-feature-icon">📄</div><h3>40+ Modelos de Documentos</h3><p>Contratos, declarações, recibos, acordos — modelos de referência com estrutura profissional completa</p></div>
+      <div class="land-feature"><div class="land-feature-icon">⬇️</div><h3>Download em PDF</h3><p>Baixe seu modelo formatado profissionalmente, pronto para imprimir ou assinar onde preferir</p></div>
+      <div class="land-feature"><div class="land-feature-icon">✏️</div><h3>Edição completa</h3><p>Edite qualquer campo do modelo após gerado, sem perder a formatação profissional</p></div>
+      <div class="land-feature"><div class="land-feature-icon">☁️</div><h3>Salvo na nuvem</h3><p>Seus modelos ficam salvos com segurança. Acesse de qualquer dispositivo a qualquer hora</p></div>
       <div class="land-feature"><div class="land-feature-icon">🔒</div><h3>100% Seguro</h3><p>Dados protegidos com Firebase Authentication e criptografia de ponta a ponta</p></div>
     </div>
   </section>
@@ -390,27 +390,29 @@
 
     <!-- ASSISTENTE IA -->
     <div id="page-ai" class="page">
-      <div class="page-header"><div class="page-title">🤖 Assistente IA</div><div class="page-subtitle">Tire dúvidas jurídicas e receba ajuda personalizada</div></div>
+      <div class="page-header"><div class="page-title">🤖 Assistente IA</div><div class="page-subtitle">Tire dúvidas sobre preenchimento e receba sugestões de redação</div></div>
       <div class="ia-chat-container">
         <div class="ia-chat-messages" id="ia-messages">
           <div class="ia-msg ia-msg-bot">
             <div class="ia-msg-avatar">🤖</div>
             <div class="ia-msg-bubble">
-              Olá! Sou o assistente jurídico do <strong>DocFácil IA</strong>. Posso te ajudar com:<br><br>
-              • Dúvidas sobre contratos e documentos<br>
-              • Explicação de cláusulas jurídicas<br>
-              • Indicação do documento certo para cada caso<br>
-              • Informações sobre leis brasileiras<br><br>
+              Olá! Sou o assistente de escrita do <strong>DocFácil</strong>. Posso te ajudar com:<br><br>
+              • Como preencher cada campo dos modelos<br>
+              • Explicar o significado de termos nos documentos<br>
+              • Sugestões de redação para seu caso<br>
+              • Qual modelo usar para cada situação<br>
+              • Dúvidas gerais sobre os documentos<br><br>
+              <small style="color:#999;">⚠️ Não prestamos assessoria jurídica. Para orientação legal, consulte um advogado inscrito na OAB.</small><br><br>
               Como posso te ajudar hoje?
             </div>
           </div>
         </div>
         <div class="ia-suggestions">
-          <button class="ia-sug" onclick="sendIASug('Qual documento preciso para contratar um freelancer?')">Contratar freelancer?</button>
-          <button class="ia-sug" onclick="sendIASug('Quais são as cláusulas mais importantes num contrato de aluguel?')">Cláusulas de aluguel</button>
-          <button class="ia-sug" onclick="sendIASug('O que é LGPD e preciso incluir no meu contrato?')">O que é LGPD?</button>
-          <button class="ia-sug" onclick="sendIASug('Como funciona a multa rescisória em contratos?')">Multa rescisória</button>
-          <button class="ia-sug" onclick="sendIASug('Diferença entre CLT e PJ para prestador de serviços')">CLT vs PJ</button>
+          <button class="ia-sug" onclick="sendIASug('Qual modelo devo usar para contratar um freelancer?')">Contratar freelancer?</button>
+          <button class="ia-sug" onclick="sendIASug('O que significa cláusula rescisória e como preencher?')">Cláusula rescisória</button>
+          <button class="ia-sug" onclick="sendIASug('O que é LGPD e quando devo incluir no contrato?')">O que é LGPD?</button>
+          <button class="ia-sug" onclick="sendIASug('Como preencher o campo de foro competente?')">Foro competente</button>
+          <button class="ia-sug" onclick="sendIASug('Qual a diferença entre contrato PJ e CLT?')">PJ vs CLT</button>
         </div>
         <div class="ia-chat-input">
           <textarea id="ia-input" placeholder="Digite sua dúvida..." rows="2" onkeydown="iaKeydown(event)"></textarea>
