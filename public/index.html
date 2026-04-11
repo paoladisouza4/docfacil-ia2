@@ -53,17 +53,22 @@
     <div class="land-nav-links">
       <a href="#features">Funcionalidades</a>
       <a href="#docs">Documentos</a>
+      <a href="#" onclick="openModal('modal-sobre');return false;">Sobre</a>
+      <a href="#" onclick="openModal('modal-faq');return false;">FAQ</a>
       <button class="land-btn-login" onclick="showAuth('login')">Entrar</button>
       <button class="land-btn-cta" onclick="showAuth('register')">Criar conta grátis</button>
     </div>
-    <button class="land-hamburger" onclick="toggleLandNav()">☰</button>
+    <button class="land-hamburger" onclick="toggleLandNav()" id="land-hamburger">☰</button>
   </nav>
   <div class="land-mobile-nav" id="land-mobile-nav" style="display:none;">
-    <a href="#features" onclick="toggleLandNav()">Funcionalidades</a>
-    <a href="#docs" onclick="toggleLandNav()">Documentos</a>
-    <button onclick="showAuth('login');toggleLandNav()">Entrar</button>
-    <button class="land-btn-cta" onclick="showAuth('register');toggleLandNav()">Criar conta grátis</button>
+    <a href="#features" onclick="closeLandNav()">Funcionalidades</a>
+    <a href="#docs" onclick="closeLandNav()">Documentos</a>
+    <a href="#" onclick="openModal('modal-sobre');closeLandNav();return false;">Sobre</a>
+    <a href="#" onclick="openModal('modal-faq');closeLandNav();return false;">FAQ</a>
+    <button onclick="showAuth('login');closeLandNav()">Entrar</button>
+    <button class="land-btn-cta" onclick="showAuth('register');closeLandNav()">Criar conta grátis</button>
   </div>
+  <div id="land-nav-overlay" onclick="closeLandNav()" style="display:none;position:fixed;inset:0;z-index:89;"></div>
 
   <section class="land-hero">
     <div class="land-hero-badge">🤖 Com Inteligência Artificial</div>
@@ -81,7 +86,7 @@
       <div class="land-stat-div"></div>
       <div class="land-stat"><strong>100%</strong><span>Gratuito</span></div>
       <div class="land-stat-div"></div>
-      <div class="land-stat"><strong>IA</strong><span>Assistente jurídico</span></div>
+      <div class="land-stat"><strong>IA</strong><span>Assistente IA</span></div>
       <div class="land-stat-div"></div>
       <div class="land-stat"><strong>PDF</strong><span>Download imediato</span></div>
     </div>
@@ -109,7 +114,7 @@
       <div class="land-cat"><div class="land-cat-icon">💼</div><h4>Trabalho</h4><p>Currículo, carta demissão, estágio, autônomo</p></div>
       <div class="land-cat"><div class="land-cat-icon">🧍</div><h4>Declarações</h4><p>Residência, renda, comparecimento, união estável</p></div>
       <div class="land-cat"><div class="land-cat-icon">💰</div><h4>Financeiro</h4><p>Recibo, quitação, confissão dívida, parcelamento</p></div>
-      <div class="land-cat"><div class="land-cat-icon">⚖️</div><h4>Jurídico</h4><p>LGPD, termos de uso, notificação extrajudicial</p></div>
+      <div class="land-cat"><div class="land-cat-icon">⚖️</div><h4>Legal</h4><p>LGPD, termos de uso, notificação extrajudicial</p></div>
       <div class="land-cat"><div class="land-cat-icon">📦</div><h4>Empresarial</h4><p>Contrato social, acordo sócios, investimento</p></div>
       <div class="land-cat"><div class="land-cat-icon">🤖</div><h4>Extras IA</h4><p>Documentos gerados 100% por inteligência artificial</p></div>
     </div>
@@ -123,9 +128,140 @@
 
   <footer class="land-footer">
     <div class="land-footer-logo">DocFácil <span>IA</span></div>
-    <p>Documentos profissionais com inteligência artificial · Gratuito</p>
-    <p style="margin-top:8px;font-size:11px;opacity:.6;">Os documentos são modelos de referência. Consulte um advogado para casos específicos.</p>
+    <p>Modelos de documentos profissionais com inteligência artificial · Gratuito</p>
+    <div class="land-footer-links">
+      <button onclick="openModal('modal-sobre')">Sobre</button>
+      <span>·</span>
+      <button onclick="openModal('modal-como')">Como funciona</button>
+      <span>·</span>
+      <button onclick="openModal('modal-faq')">Perguntas frequentes</button>
+      <span>·</span>
+      <button onclick="openModal('modal-termos')">Termos de uso</button>
+      <span>·</span>
+      <button onclick="openModal('modal-privacidade')">Privacidade</button>
+    </div>
+    <p style="margin-top:12px;font-size:11px;opacity:.5;">Os modelos gerados são de referência. Para orientação legal, consulte um advogado.</p>
   </footer>
+
+  <!-- ═══ MODAIS INSTITUCIONAIS ═══ -->
+  <div id="modal-sobre" class="inst-overlay" onclick="closeModal(event,this)">
+    <div class="inst-modal">
+      <button class="inst-close" onclick="closeModalById('modal-sobre')">✕</button>
+      <div class="inst-icon">📄</div>
+      <h2>Sobre o DocFácil</h2>
+      <p>O <strong>DocFácil</strong> é uma plataforma de geração de modelos de documentos profissionais, desenvolvida para facilitar o dia a dia de pessoas físicas e empresas.</p>
+      <p>Com tecnologia de Inteligência Artificial, você preenche os dados e o sistema gera um modelo completo, pronto para baixar em PDF e assinar onde preferir.</p>
+      <h3>Nossa missão</h3>
+      <p>Democratizar o acesso a modelos de documentos de qualidade, eliminando a burocracia e o tempo perdido na elaboração de contratos e declarações.</p>
+      <h3>O que oferecemos</h3>
+      <ul>
+        <li>40+ modelos de documentos em 8 categorias</li>
+        <li>Assistente de escrita com IA</li>
+        <li>Download em PDF profissional</li>
+        <li>Armazenamento seguro na nuvem</li>
+        <li>100% gratuito, sem assinatura</li>
+      </ul>
+      <div class="inst-disclaimer">⚠️ O DocFácil gera modelos de referência e não presta assessoria ou consultoria de qualquer natureza.</div>
+    </div>
+  </div>
+
+  <div id="modal-como" class="inst-overlay" onclick="closeModal(event,this)">
+    <div class="inst-modal">
+      <button class="inst-close" onclick="closeModalById('modal-como')">✕</button>
+      <div class="inst-icon">⚡</div>
+      <h2>Como funciona</h2>
+      <div class="inst-steps">
+        <div class="inst-step"><div class="inst-step-num">1</div><div><strong>Crie sua conta</strong><p>Cadastro gratuito com e-mail e senha. Seus dados ficam protegidos com Firebase.</p></div></div>
+        <div class="inst-step"><div class="inst-step-num">2</div><div><strong>Escolha o modelo</strong><p>Selecione entre 40+ tipos de documentos em 8 categorias diferentes.</p></div></div>
+        <div class="inst-step"><div class="inst-step-num">3</div><div><strong>Preencha os dados</strong><p>Informe os dados das partes, valores, prazos e demais informações necessárias.</p></div></div>
+        <div class="inst-step"><div class="inst-step-num">4</div><div><strong>Gere o documento</strong><p>O sistema cria automaticamente o modelo completo com todas as cláusulas.</p></div></div>
+        <div class="inst-step"><div class="inst-step-num">5</div><div><strong>Baixe o PDF</strong><p>Faça download do arquivo formatado e assine onde preferir — cartório, app de assinatura ou impresso.</p></div></div>
+      </div>
+      <div class="inst-disclaimer">Os modelos ficam salvos na sua conta e podem ser editados a qualquer momento.</div>
+    </div>
+  </div>
+
+  <div id="modal-faq" class="inst-overlay" onclick="closeModal(event,this)">
+    <div class="inst-modal">
+      <button class="inst-close" onclick="closeModalById('modal-faq')">✕</button>
+      <div class="inst-icon">❓</div>
+      <h2>Perguntas Frequentes</h2>
+      <div class="inst-faq">
+        <div class="inst-faq-item" onclick="toggleFaq(this)">
+          <div class="inst-faq-q">Os documentos gerados têm validade legal? <span>+</span></div>
+          <div class="inst-faq-a">Os modelos gerados pelo DocFácil são instrumentos particulares que podem ter validade legal quando assinados pelas partes. Para situações que exigem registro em cartório ou validade específica, consulte um profissional habilitado.</div>
+        </div>
+        <div class="inst-faq-item" onclick="toggleFaq(this)">
+          <div class="inst-faq-q">O sistema é realmente gratuito? <span>+</span></div>
+          <div class="inst-faq-a">Sim! O DocFácil é 100% gratuito. Você cria conta, gera documentos e baixa PDFs sem pagar nada. Não há planos, assinaturas ou cobranças ocultas.</div>
+        </div>
+        <div class="inst-faq-item" onclick="toggleFaq(this)">
+          <div class="inst-faq-q">Meus dados ficam seguros? <span>+</span></div>
+          <div class="inst-faq-a">Sim. Utilizamos Firebase Authentication e Firestore do Google, com criptografia de ponta a ponta. Apenas você tem acesso aos seus documentos.</div>
+        </div>
+        <div class="inst-faq-item" onclick="toggleFaq(this)">
+          <div class="inst-faq-q">Posso editar o documento depois de gerado? <span>+</span></div>
+          <div class="inst-faq-a">Sim! Após gerar o documento, clique em "Editar" para modificar qualquer campo diretamente no documento, como se fosse um editor de texto. As alterações ficam salvas automaticamente.</div>
+        </div>
+        <div class="inst-faq-item" onclick="toggleFaq(this)">
+          <div class="inst-faq-q">Como assinar o documento depois de baixar? <span>+</span></div>
+          <div class="inst-faq-a">Após baixar o PDF, você pode: imprimir e assinar fisicamente, usar apps de assinatura digital como DocuSign, AutentiCar ou Gov.br, ou reconhecer em cartório caso necessário.</div>
+        </div>
+        <div class="inst-faq-item" onclick="toggleFaq(this)">
+          <div class="inst-faq-q">Quantos documentos posso gerar? <span>+</span></div>
+          <div class="inst-faq-a">Não há limite. Você pode gerar quantos modelos quiser, de todos os tipos disponíveis, sem restrições.</div>
+        </div>
+        <div class="inst-faq-item" onclick="toggleFaq(this)">
+          <div class="inst-faq-q">O DocFácil presta consultoria? <span>+</span></div>
+          <div class="inst-faq-a">Não. O DocFácil é uma ferramenta de geração de modelos de documentos. Não prestamos assessoria, consultoria ou orientação de qualquer natureza. Para casos específicos, consulte um profissional habilitado.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-termos" class="inst-overlay" onclick="closeModal(event,this)">
+    <div class="inst-modal">
+      <button class="inst-close" onclick="closeModalById('modal-termos')">✕</button>
+      <div class="inst-icon">📋</div>
+      <h2>Termos de Uso</h2>
+      <p><strong>Última atualização:</strong> Abril de 2026</p>
+      <h3>1. Aceitação dos Termos</h3>
+      <p>Ao utilizar o DocFácil, você concorda com estes Termos de Uso. Se não concordar, não utilize a plataforma.</p>
+      <h3>2. Descrição do Serviço</h3>
+      <p>O DocFácil é uma plataforma digital que oferece modelos de documentos para download. Os modelos são de referência e não constituem assessoria, consultoria ou orientação de qualquer natureza.</p>
+      <h3>3. Responsabilidades do Usuário</h3>
+      <p>O usuário é responsável por: (a) verificar a adequação do modelo à sua situação específica; (b) preencher os dados corretamente; (c) consultar um profissional habilitado quando necessário; (d) não utilizar a plataforma para fins ilícitos.</p>
+      <h3>4. Limitação de Responsabilidade</h3>
+      <p>O DocFácil não se responsabiliza por: danos decorrentes do uso dos modelos sem revisão profissional; informações incorretas inseridas pelo usuário; decisões tomadas com base nos modelos gerados.</p>
+      <h3>5. Propriedade Intelectual</h3>
+      <p>Os modelos gerados a partir dos dados do usuário pertencem ao próprio usuário. A plataforma, seu código e design são propriedade do DocFácil.</p>
+      <h3>6. Alterações</h3>
+      <p>Podemos atualizar estes termos a qualquer momento, com aviso prévio aos usuários cadastrados.</p>
+      <div class="inst-disclaimer">Dúvidas? Entre em contato pelo e-mail: contato@docfacil.app</div>
+    </div>
+  </div>
+
+  <div id="modal-privacidade" class="inst-overlay" onclick="closeModal(event,this)">
+    <div class="inst-modal">
+      <button class="inst-close" onclick="closeModalById('modal-privacidade')">✕</button>
+      <div class="inst-icon">🔒</div>
+      <h2>Política de Privacidade</h2>
+      <p><strong>Última atualização:</strong> Abril de 2026</p>
+      <h3>1. Dados Coletados</h3>
+      <p>Coletamos: nome, e-mail e dados inseridos nos modelos de documentos. Não coletamos dados de pagamento (o serviço é gratuito).</p>
+      <h3>2. Uso dos Dados</h3>
+      <p>Seus dados são usados exclusivamente para: autenticação na plataforma, armazenamento dos seus documentos e comunicações relacionadas ao serviço.</p>
+      <h3>3. Compartilhamento</h3>
+      <p>Não vendemos, alugamos ou compartilhamos seus dados com terceiros para fins comerciais. Utilizamos o Firebase (Google) para autenticação e armazenamento, sujeito à política de privacidade do Google.</p>
+      <h3>4. Segurança</h3>
+      <p>Utilizamos Firebase Authentication com criptografia. Apenas você tem acesso aos seus documentos — nem nós conseguimos visualizá-los sem sua autorização.</p>
+      <h3>5. Seus Direitos (LGPD)</h3>
+      <p>Nos termos da Lei nº 13.709/2018, você tem direito a: acessar seus dados, corrigi-los, excluí-los e revogar seu consentimento a qualquer momento através das configurações da conta.</p>
+      <h3>6. Retenção</h3>
+      <p>Seus dados são mantidos enquanto sua conta estiver ativa. Ao excluir a conta, todos os dados são removidos permanentemente.</p>
+      <div class="inst-disclaimer">Contato do encarregado de dados (DPO): contato@docfacil.app</div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════ AUTH MODAL ═══════════════════════════ -->
@@ -249,7 +385,7 @@
         <div class="ia-banner-icon">🤖</div>
         <div class="ia-banner-content">
           <div class="ia-banner-title">Assistente IA disponível</div>
-          <div class="ia-banner-sub">Tire dúvidas jurídicas, peça ajuda com cláusulas ou gere documentos personalizados</div>
+          <div class="ia-banner-sub">Peça ajuda para redigir, revise campos e gere modelos personalizados</div>
         </div>
         <div class="ia-banner-cta">Usar IA →</div>
       </div>
@@ -317,12 +453,23 @@
           <div class="field"><label>E-mail</label><input id="p_b_email" type="email" placeholder="email@exemplo.com"/></div>
         </div>
         <hr class="section-divider"/>
-        <div class="section-label">Testemunhas <span style="font-weight:400;text-transform:none;letter-spacing:0;">(opcional)</span></div>
-        <div class="form-grid">
-          <div class="field"><label>Testemunha 1 — Nome</label><input id="test1_nome" placeholder="Nome completo"/></div>
-          <div class="field"><label>Testemunha 1 — CPF</label><input id="test1_doc" placeholder="000.000.000-00"/></div>
-          <div class="field"><label>Testemunha 2 — Nome</label><input id="test2_nome" placeholder="Nome completo"/></div>
-          <div class="field"><label>Testemunha 2 — CPF</label><input id="test2_doc" placeholder="000.000.000-00"/></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="section-label" style="margin-bottom:0;">Testemunhas</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2);">
+            <span id="test-toggle-label">Não incluir</span>
+            <div class="toggle-switch" id="test-toggle" onclick="toggleTestemunhas()">
+              <div class="toggle-knob"></div>
+            </div>
+          </label>
+        </div>
+        <div id="test-fields" style="display:none;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">As testemunhas aparecerão no documento para assinar junto com as partes.</div>
+          <div class="form-grid">
+            <div class="field"><label>Testemunha 1 — Nome</label><input id="test1_nome" placeholder="Nome completo"/></div>
+            <div class="field"><label>Testemunha 1 — CPF</label><input id="test1_doc" placeholder="000.000.000-00"/></div>
+            <div class="field"><label>Testemunha 2 — Nome</label><input id="test2_nome" placeholder="Nome completo"/></div>
+            <div class="field"><label>Testemunha 2 — CPF</label><input id="test2_doc" placeholder="000.000.000-00"/></div>
+          </div>
         </div>
       </div>
 
@@ -435,56 +582,20 @@
       <div class="doc-viewer"><div class="doc-paper" id="doc-paper-content"></div></div>
     </div>
 
-    <!-- EDITAR -->
+    <!-- EDITAR INLINE (estilo Word) -->
     <div id="page-edit" class="page">
       <div class="toolbar">
         <button class="btn-back-doc" onclick="cancelEdit()">← Cancelar</button>
         <div style="flex:1;font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);">✏️ Editar Documento</div>
-        <button class="btn-sm" onclick="saveEdit()">💾 Salvar alterações</button>
+        <button class="btn-ghost" onclick="saveEdit()">💾 Salvar</button>
+        <button class="btn-sm" onclick="saveEditAndDownload()">⬇ Salvar e Baixar PDF</button>
       </div>
-      <div class="edit-container">
-        <div class="edit-panel">
-          <div class="edit-panel-title">Campos do documento</div>
-          <div class="edit-info-box">Edite os campos abaixo e clique em Salvar para atualizar o documento.</div>
-          <div class="edit-section">Parte A</div>
-          <div class="form-grid">
-            <div class="field form-full"><label>Nome</label><input id="edit_pa_nome"/></div>
-            <div class="field"><label>CPF/CNPJ</label><input id="edit_pa_doc"/></div>
-            <div class="field"><label>Profissão</label><input id="edit_pa_prof"/></div>
-            <div class="field form-full"><label>Endereço</label><input id="edit_pa_end"/></div>
-            <div class="field"><label>Telefone</label><input id="edit_pa_tel"/></div>
-            <div class="field"><label>E-mail</label><input id="edit_pa_email"/></div>
-          </div>
-          <div class="edit-section">Parte B</div>
-          <div class="form-grid">
-            <div class="field form-full"><label>Nome</label><input id="edit_pb_nome"/></div>
-            <div class="field"><label>CPF/CNPJ</label><input id="edit_pb_doc"/></div>
-            <div class="field"><label>Profissão</label><input id="edit_pb_prof"/></div>
-            <div class="field form-full"><label>Endereço</label><input id="edit_pb_end"/></div>
-            <div class="field"><label>Telefone</label><input id="edit_pb_tel"/></div>
-            <div class="field"><label>E-mail</label><input id="edit_pb_email"/></div>
-          </div>
-          <div class="edit-section">Objeto e Valores</div>
-          <div class="form-grid">
-            <div class="field form-full"><label>Descrição do objeto</label><textarea id="edit_obj_desc" rows="3"></textarea></div>
-            <div class="field"><label>Valor total (R$)</label><input id="edit_val_total" oninput="formatCurrency(this)"/></div>
-            <div class="field"><label>Forma de pagamento</label><input id="edit_val_forma"/></div>
-            <div class="field"><label>Vencimento</label><input id="edit_val_venc"/></div>
-            <div class="field"><label>Dados bancários / Pix</label><input id="edit_val_banco"/></div>
-          </div>
-          <div class="edit-section">Jurídico</div>
-          <div class="form-grid">
-            <div class="field"><label>Foro competente</label><input id="edit_jur_foro"/></div>
-            <div class="field"><label>Local da assinatura</label><input id="edit_jur_local"/></div>
-            <div class="field form-full"><label>Disposições adicionais</label><textarea id="edit_jur_extra" rows="2"></textarea></div>
-          </div>
-        </div>
-        <div class="edit-preview">
-          <div class="edit-preview-title">Pré-visualização</div>
-          <div class="doc-viewer" style="box-shadow:none;border:1px solid var(--border);margin:0;">
-            <div class="doc-paper" id="edit-preview-content" style="padding:40px;font-size:10pt;"></div>
-          </div>
-        </div>
+      <div class="edit-word-hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Clique em qualquer texto sublinhado para editar diretamente no documento
+      </div>
+      <div class="doc-viewer">
+        <div class="doc-paper" id="edit-inline-content"></div>
       </div>
     </div>
 
