@@ -1140,3 +1140,20 @@ body {
   .inst-modal h2 { font-size:20px; }
   .edit-word-hint { font-size:12px; }
 }
+
+/* Parágrafos editáveis inline */
+.edit-para {
+  border-bottom:1px dashed rgba(201,169,110,0.4);
+  outline:none;
+  cursor:text;
+  transition:background .15s;
+  border-radius:2px;
+  padding:1px 2px;
+}
+.edit-para:focus {
+  background:rgba(201,169,110,0.08);
+  border-bottom-color:var(--accent);
+}
+.edit-para:hover {
+  background:rgba(201,169,110,0.04);
+}
