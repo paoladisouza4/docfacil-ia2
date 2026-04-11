@@ -575,32 +575,64 @@ function generateDocument() {
     ? { nome: V('test2_nome') || '___________________________', doc: V('test2_doc') || '___________________' }
     : { nome: null, doc: null };
 
+  // Obrigações padrão específicas por tipo de documento
+  const defaultObrigA = {
+    aluguel_res: 'entregar o imóvel em perfeitas condições de habitabilidade, manter o uso pacífico e cumprir as obrigações previstas na Lei do Inquilinato',
+    aluguel_com: 'entregar o imóvel em perfeitas condições de uso, manter a posse pacífica e cumprir as obrigações previstas na Lei do Inquilinato',
+    locacao_simples: 'entregar o imóvel em perfeitas condições, garantir a posse tranquila e cumprir a Lei do Inquilinato',
+    locacao_fiador: 'entregar o imóvel em perfeitas condições, garantir a posse tranquila e cumprir a Lei do Inquilinato',
+    compravenda: 'entregar o bem livre e desembaraçado de ônus, transferir a propriedade e responder pela evicção e vícios ocultos',
+    parceria: 'aportar os recursos, conhecimento e infraestrutura acordados, participar das decisões estratégicas e cumprir as metas estabelecidas',
+    plano_parceria: 'aportar os recursos, conhecimento e infraestrutura acordados, participar das decisões estratégicas e cumprir as metas estabelecidas',
+    comissao: 'fornecer informações, materiais e suporte necessários às vendas, pagar as comissões nos prazos acordados e manter o COMISSIONADO informado',
+    nda: 'fornecer as informações confidenciais necessárias para os fins acordados e zelar pela integridade das informações compartilhadas',
+    estagio: 'oferecer atividades compatíveis com a área de formação, designar supervisor responsável e garantir condições adequadas de trabalho',
+    contrato_social: 'integralizar as quotas no valor e prazo acordados e participar ativamente da gestão da sociedade',
+    acordo_socios: 'integralizar as quotas no valor acordado e participar das decisões conforme este instrumento',
+    termo_invest: 'aportar os recursos no valor e prazo acordados e acompanhar a execução do plano de negócios',
+  };
+  const defaultObrigB = {
+    aluguel_res: 'pagar o aluguel e encargos pontualmente, usar o imóvel exclusivamente para fins residenciais, conservá-lo e devolvê-lo nas mesmas condições',
+    aluguel_com: 'pagar o aluguel e encargos pontualmente, usar o imóvel exclusivamente para fins comerciais, conservá-lo e devolvê-lo nas mesmas condições',
+    locacao_simples: 'pagar o aluguel pontualmente, conservar o imóvel e devolvê-lo nas mesmas condições ao final da locação',
+    locacao_fiador: 'pagar o aluguel pontualmente, conservar o imóvel e devolvê-lo nas mesmas condições ao final da locação',
+    compravenda: 'efetuar o pagamento no prazo e forma acordados e receber o bem nas condições descritas neste instrumento',
+    parceria: 'executar as atividades operacionais acordadas, contribuir com conhecimento e relacionamento e cumprir as metas estabelecidas',
+    plano_parceria: 'executar as atividades operacionais acordadas, contribuir com conhecimento e relacionamento e cumprir as metas estabelecidas',
+    comissao: 'promover ativamente as vendas, manter relacionamento ético com clientes, prestar contas regularmente e não representar concorrentes',
+    nda: 'manter absoluto sigilo sobre as informações recebidas, utilizá-las apenas para os fins acordados e protegê-las com o mesmo cuidado que protege suas próprias informações',
+    estagio: 'cumprir a carga horária, zelar pelo sigilo das informações da empresa e cumprir as normas internas',
+    contrato_social: 'integralizar as quotas no valor e prazo acordados e participar das atividades da sociedade conforme o objeto social',
+    acordo_socios: 'integralizar as quotas no valor acordado e cumprir as obrigações deste instrumento',
+    termo_invest: 'utilizar os recursos exclusivamente para as finalidades descritas, prestar contas regularmente e não alienar ativos sem anuência do investidor',
+  };
+
   const obj = {
     desc:        V('obj_desc')        || 'objeto conforme acordado entre as partes',
     inicio:      V('obj_inicio')      ? formatDate(V('obj_inicio')) : dateStr,
     fim:         V('obj_fim')         ? formatDate(V('obj_fim'))    : 'indeterminado',
     vigencia:    V('obj_vigencia')    || '',
-    local:       V('obj_local')       || 'conforme acordado',
-    obrig_a:     V('obj_obrig_a')     || 'efetuar o pagamento nos prazos estabelecidos',
-    obrig_b:     V('obj_obrig_b')     || 'executar o objeto com boa técnica e nos prazos acordados',
+    local:       V('obj_local')       || '',
+    obrig_a:     V('obj_obrig_a')     || defaultObrigA[selectedType] || 'cumprir integralmente as obrigações assumidas neste instrumento',
+    obrig_b:     V('obj_obrig_b')     || defaultObrigB[selectedType] || 'cumprir integralmente as obrigações assumidas neste instrumento',
     entregaveis: V('obj_entregaveis') || '',
   };
   const val = {
     total:    V('val_total')    || '0,00',
     forma:    V('val_forma')    || 'à vista',
     venc:     V('val_venc')     || 'na data acordada',
-    banco:    V('val_banco')    || 'conforme dados a serem fornecidos',
+    banco:    V('val_banco')    || '',
     reajuste: V('val_reajuste') || '',
     multa:    V('val_multa')    || '2%',
     juros:    V('val_juros')    || '1% ao mês',
     cond:     V('val_cond')     || '',
   };
   const jur = {
-    foro:       V('jur_foro')       || 'da Comarca da Capital do Estado',
+    foro:       V('jur_foro')       || 'da Comarca do domicílio das partes',
     rescisao:   V('jur_rescisao')   || '30 dias',
     multa_resc: V('jur_multa_resc') || '10% sobre o valor total do contrato',
     resolucao:  V('jur_resolucao')  || 'pelo Poder Judiciário',
-    local:      V('jur_local')      || 'local e data da assinatura',
+    local:      V('jur_local')      || '',
     extra:      V('jur_extra')      || '',
   };
 
@@ -736,7 +768,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -769,7 +801,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">RECEBEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PAGANTE</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -797,7 +829,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div>
     <div class="clausula"><div class="clausula-body"><p>${declTextos[t]}</p>${jur.extra ? `<p>${jur.extra}</p>` : ''}</div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">DECLARANTE</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         ${t === 'decl_uniao' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DECLARANTE 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
@@ -837,7 +869,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CREDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DEVEDOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -883,7 +915,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE DIVULGANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE RECEPTORA</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -950,7 +982,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">CONTRATADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -987,7 +1019,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="clausula"><div class="clausula-title">Cláusula III — Da Remuneração</div><div class="clausula-body">
-      <p>3.1. Pela execução da parceria, o CONTRATANTE pagará ao INFLUENCIADOR o valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, mediante: <strong>${val.banco || 'dados a serem informados'}</strong>.</p>
+      <p>3.1. Pela execução da parceria, o CONTRATANTE pagará ao INFLUENCIADOR o valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, mediante: <strong>${val.banco || 'a definir entre as partes'}</strong>.</p>
       ${val.cond ? `<p>3.2. Condições especiais: ${val.cond}.</p>` : ''}
     </div></div>
 
@@ -1002,7 +1034,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">INFLUENCIADOR DIGITAL</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1051,7 +1083,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Fica eleito o foro de <strong>${jur.foro}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">VENDEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMPRADOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1085,7 +1117,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula III — Da Remuneração e Divisão de Resultados</div><div class="clausula-body">
       <p>3.1. Os resultados financeiros da parceria serão divididos na proporção de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), conforme <strong>${val.forma}</strong>.</p>
-      <p>3.2. Os pagamentos serão realizados mediante: <strong>${val.banco || 'acordo entre as partes'}</strong>, com vencimento <strong>${val.venc || 'conforme apuração dos resultados'}</strong>.</p>
+      <p>3.2. Os pagamentos serão realizados mediante: <strong>${val.banco || 'a definir entre as partes'}</strong>, com vencimento <strong>${val.venc || 'conforme apuração dos resultados'}</strong>.</p>
       ${val.cond ? `<p>3.3. Condições especiais: ${val.cond}</p>` : ''}
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula IV — Da Confidencialidade</div><div class="clausula-body">
@@ -1100,7 +1132,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Este instrumento não gera vínculo societário entre as partes. Fica eleito o foro de <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARCEIRO A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARCEIRO B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1129,7 +1161,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula II — Da Comissão</div><div class="clausula-body">
       <p>2.1. O COMISSIONADO receberá comissão de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}) ou equivalente a <strong>${val.forma}</strong> sobre as vendas realizadas.</p>
-      <p>2.2. O pagamento das comissões ocorrerá <strong>${val.venc || 'mensalmente até o 10º dia do mês subsequente'}</strong>, mediante: <strong>${val.banco || 'dados bancários do COMISSIONADO'}</strong>.</p>
+      <p>2.2. O pagamento das comissões ocorrerá <strong>${val.venc || 'mensalmente até o 10º dia do mês subsequente'}</strong>, mediante: <strong>${val.banco || 'a definir entre as partes'}</strong>.</p>
       <p>2.3. As comissões são devidas no momento da efetivação do pagamento pelo cliente final ao COMITENTE.</p>
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula III — Das Obrigações do Comissionado</div><div class="clausula-body">
@@ -1144,7 +1176,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Regido pela Lei nº 4.886/1965 e Código Civil. Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">COMITENTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMISSIONADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1187,7 +1219,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>As partes declaram que as informações acima correspondem ao estado real do imóvel na data da vistoria, comprometendo-se o LOCATÁRIO a devolvê-lo nas mesmas condições ao final da locação, salvo desgaste natural pelo uso.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR / PROPRIETÁRIO</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO / OCUPANTE</div></div>
@@ -1212,7 +1244,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Esta notificação serve como prova formal do aviso prévio legalmente exigido.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1235,7 +1267,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>1.2. As partes concordam que o valor acima representa o total da dívida, incluindo aluguéis, encargos, multas e juros devidos até <strong>${obj.inicio}</strong>.</p>
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula II — Do Acordo de Pagamento</div><div class="clausula-body">
-      <p>2.1. O LOCATÁRIO compromete-se a quitar o débito <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante: <strong>${val.banco || 'dados bancários do LOCADOR'}</strong>.</p>
+      <p>2.1. O LOCATÁRIO compromete-se a quitar o débito <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante: <strong>${val.banco || 'a definir entre as partes'}</strong>.</p>
       <p>2.2. O LOCATÁRIO compromete-se ainda a manter os aluguéis futuros em dia, sob pena de rescisão imediata deste acordo.</p>
       <p>2.3. O descumprimento deste acordo ensejará a retomada imediata das medidas judiciais pelo LOCADOR, sem necessidade de nova notificação.</p>
     </div></div>
@@ -1243,7 +1275,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>3.1. O LOCADOR concede ao LOCATÁRIO a quitação condicionada ao cumprimento integral deste acordo. O descumprimento de qualquer parcela tornará o acordo sem efeito, restaurando integralmente o débito original.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1329,7 +1361,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Esta declaração é fornecida a pedido do(a) interessado(a) para os fins que se fizerem necessários, sendo verdadeiras todas as informações aqui prestadas.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">Representante Legal</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"></div>
@@ -1364,7 +1396,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>O presente estágio não gera vínculo empregatício, nos termos do art. 3º da Lei nº 11.788/2008. Foro: <strong>${jur.foro}</strong>.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">EMPRESA CONCEDENTE</div><div class="sig-doc">CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">ESTAGIÁRIO(A)</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
@@ -1396,7 +1428,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Declaro ter prestado os serviços acima descritos e que as informações são verdadeiras.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PRESTADOR DE SERVIÇO</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">TOMADOR — Ciente</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1434,7 +1466,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>O titular declara ter lido e compreendido este termo, consentindo livremente com o tratamento de seus dados pessoais conforme descrito acima, nos termos do art. 8º da LGPD.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome || 'TITULAR DOS DADOS'}</div><div class="sig-role">TITULAR</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTROLADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
@@ -1475,7 +1507,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       ${jur.extra ? `<p>${jur.extra}</p>` : ''}
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1498,7 +1530,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>1.2. Ficam acordadas as seguintes obrigações: ${obj.obrig_a && obj.obrig_b ? `<br>— PARTE A: ${obj.obrig_a}<br>— PARTE B: ${obj.obrig_b}` : obj.entregaveis || 'conforme negociado entre as partes'}.</p>
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula II — Do Pagamento</div><div class="clausula-body">
-      <p>2.1. Fica acordado o pagamento de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante: <strong>${val.banco || 'dados bancários a informar'}</strong>.</p>
+      <p>2.1. Fica acordado o pagamento de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante: <strong>${val.banco || 'a definir entre as partes'}</strong>.</p>
       <p>2.2. O descumprimento das obrigações acordadas acarretará multa de <strong>${val.multa}</strong> sobre o valor em atraso.</p>
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula III — Da Quitação</div><div class="clausula-body">
@@ -1509,7 +1541,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1557,7 +1589,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Regido pelo Código Civil. Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO ADMINISTRADOR</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
@@ -1601,7 +1633,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO A</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO B</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
@@ -1621,7 +1653,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <p>As partes celebram o presente Termo de Investimento nos seguintes termos:</p>
     <div class="clausula"><div class="clausula-title">Cláusula I — Do Investimento</div><div class="clausula-body">
       <p>1.1. O INVESTIDOR aporta na EMPRESA o valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), destinado a: <strong>${obj.desc}</strong></p>
-      <p>1.2. O aporte será realizado ${val.forma}, mediante: <strong>${val.banco || 'transferência bancária'}</strong>.</p>
+      <p>1.2. O aporte será realizado ${val.forma}, mediante: <strong>${val.banco || 'a definir entre as partes'}</strong>.</p>
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula II — Da Contrapartida</div><div class="clausula-body">
       <p>2.1. Em contrapartida ao investimento, a EMPRESA oferece: <strong>${obj.obrig_b || 'participação societária / retorno financeiro conforme acordado'}</strong>.</p>
@@ -1638,7 +1670,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">INVESTIDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">EMPRESA INVESTIDA</div><div class="sig-doc">CNPJ: ${pb.doc}</div></div>
@@ -1675,7 +1707,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p><em>⚠️ Este documento é um modelo de referência para organização das informações. Para constituição legal da empresa, registre o contrato social na Junta Comercial do seu estado ou utilize o Portal do Empreendedor (MEI/ME).</em></p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">REQUERENTE / SÓCIO</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         ${pb.nome && pb.nome !== '—' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
@@ -1734,7 +1766,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
   </div></div>
 
   <div class="signatures-block">
-    <div class="signatures-title">${jur.local || 'Local'}, ${dateStr}</div>
+    <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
     <div class="sig-grid">
       <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">${roleA}</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
       <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">${roleB}</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1773,39 +1805,63 @@ function editCurrentDoc() {
 }
 
 function makeEditableHTML(html, d) {
-  // Cria versão editável: substitui valores por spans contenteditable
+  // Abordagem: torna o documento inteiro editável via contenteditable
+  // Cada parágrafo e título vira editável diretamente
   let result = html;
 
-  // Campos editáveis com data-field para identificar
-  const fields = [
-    { val: d.pa?.nome,  field: 'pa_nome'  },
-    { val: d.pa?.doc,   field: 'pa_doc'   },
-    { val: d.pa?.prof,  field: 'pa_prof'  },
-    { val: d.pa?.end,   field: 'pa_end'   },
-    { val: d.pa?.tel,   field: 'pa_tel'   },
-    { val: d.pa?.email, field: 'pa_email' },
-    { val: d.pb?.nome,  field: 'pb_nome'  },
-    { val: d.pb?.doc,   field: 'pb_doc'   },
-    { val: d.pb?.prof,  field: 'pb_prof'  },
-    { val: d.pb?.end,   field: 'pb_end'   },
-    { val: d.pb?.tel,   field: 'pb_tel'   },
-    { val: d.pb?.email, field: 'pb_email' },
+  // Marca campos específicos com data-field para salvar de volta nos dados
+  const fieldMap = [
+    { val: d.pa?.nome,   field: 'pa_nome'   },
+    { val: d.pa?.doc,    field: 'pa_doc'    },
+    { val: d.pa?.prof,   field: 'pa_prof'   },
+    { val: d.pa?.end,    field: 'pa_end'    },
+    { val: d.pa?.tel,    field: 'pa_tel'    },
+    { val: d.pa?.email,  field: 'pa_email'  },
+    { val: d.pb?.nome,   field: 'pb_nome'   },
+    { val: d.pb?.doc,    field: 'pb_doc'    },
+    { val: d.pb?.prof,   field: 'pb_prof'   },
+    { val: d.pb?.end,    field: 'pb_end'    },
+    { val: d.pb?.tel,    field: 'pb_tel'    },
+    { val: d.pb?.email,  field: 'pb_email'  },
     { val: d.val?.total, field: 'val_total' },
     { val: d.val?.forma, field: 'val_forma' },
     { val: d.val?.venc,  field: 'val_venc'  },
     { val: d.val?.banco, field: 'val_banco' },
+    { val: d.val?.multa, field: 'val_multa' },
+    { val: d.val?.juros, field: 'val_juros' },
     { val: d.obj?.desc,  field: 'obj_desc'  },
-    { val: d.jur?.foro,  field: 'jur_foro'  },
-    { val: d.jur?.local, field: 'jur_local' },
+    { val: d.obj?.local, field: 'obj_local' },
+    { val: d.obj?.obrig_a, field: 'obj_obrig_a' },
+    { val: d.obj?.obrig_b, field: 'obj_obrig_b' },
+    { val: d.obj?.entregaveis, field: 'obj_entregaveis' },
+    { val: d.jur?.foro,       field: 'jur_foro'   },
+    { val: d.jur?.local,      field: 'jur_local'  },
+    { val: d.jur?.rescisao,   field: 'jur_rescisao' },
+    { val: d.jur?.multa_resc, field: 'jur_multa_resc' },
+    { val: d.jur?.extra,      field: 'jur_extra'  },
   ];
 
-  fields.forEach(({ val, field }) => {
-    if (!val || val === 'undefined' || val === '—') return;
-    // Escapa caracteres especiais para regex
+  // Substitui cada valor por span editável
+  fieldMap.forEach(({ val, field }) => {
+    if (!val || val === 'undefined' || val === '—' || val === 'null') return;
     const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(escaped, 'g');
-    result = result.replace(regex, `<span class="edit-field" contenteditable="true" data-field="${field}" data-original="${val}" onblur="onFieldEdit(this)" oninput="markDirty()">${val}</span>`);
+    try {
+      const regex = new RegExp(escaped, 'g');
+      result = result.replace(regex,
+        `<span class="edit-field" contenteditable="true" data-field="${field}" onblur="onFieldEdit(this)" oninput="markDirty()" title="Clique para editar">${val}</span>`
+      );
+    } catch(e) { /* skip invalid regex */ }
   });
+
+  // Torna cláusulas e parágrafos também editáveis (texto livre)
+  // Substitui <p> normais (sem edit-field) por versão editável
+  result = result.replace(
+    /<p>([^<]*(?:<(?!\/p>)[^<]*)*)<\/p>/g,
+    (match, inner) => {
+      if (inner.includes('edit-field') || inner.includes('sig-') || inner.length < 3) return match;
+      return `<p class="edit-para" contenteditable="true" oninput="markDirty()" title="Clique para editar o parágrafo">${inner}</p>`;
+    }
+  );
 
   return result;
 }
@@ -1825,58 +1881,74 @@ function saveEdit() {
   const d = currentDocs.find(d => d.id === currentDocId);
   if (!d) return;
 
-  // Coleta todos os campos editados inline
+  // Coleta campos com data-field (dados estruturados)
   const fields = document.querySelectorAll('#edit-inline-content .edit-field');
   const updated = {};
   fields.forEach(el => {
-    updated[el.dataset.field] = el.textContent.trim();
+    if (el.dataset.field) updated[el.dataset.field] = el.textContent.trim();
   });
 
-  // Atualiza os dados do documento
-  if (updated.pa_nome)  d.pa = { ...d.pa, nome:  updated.pa_nome  };
-  if (updated.pa_doc)   d.pa = { ...d.pa, doc:   updated.pa_doc   };
-  if (updated.pa_prof)  d.pa = { ...d.pa, prof:  updated.pa_prof  };
-  if (updated.pa_end)   d.pa = { ...d.pa, end:   updated.pa_end   };
-  if (updated.pa_tel)   d.pa = { ...d.pa, tel:   updated.pa_tel   };
-  if (updated.pa_email) d.pa = { ...d.pa, email: updated.pa_email };
-  if (updated.pb_nome)  d.pb = { ...d.pb, nome:  updated.pb_nome  };
-  if (updated.pb_doc)   d.pb = { ...d.pb, doc:   updated.pb_doc   };
-  if (updated.pb_prof)  d.pb = { ...d.pb, prof:  updated.pb_prof  };
-  if (updated.pb_end)   d.pb = { ...d.pb, end:   updated.pb_end   };
-  if (updated.pb_tel)   d.pb = { ...d.pb, tel:   updated.pb_tel   };
-  if (updated.pb_email) d.pb = { ...d.pb, email: updated.pb_email };
-  if (updated.val_total) d.val = { ...d.val, total: updated.val_total };
-  if (updated.val_forma) d.val = { ...d.val, forma: updated.val_forma };
-  if (updated.val_venc)  d.val = { ...d.val, venc:  updated.val_venc  };
-  if (updated.val_banco) d.val = { ...d.val, banco: updated.val_banco };
-  if (updated.obj_desc)  d.obj = { ...d.obj, desc:  updated.obj_desc  };
-  if (updated.jur_foro)  d.jur = { ...d.jur, foro:  updated.jur_foro  };
-  if (updated.jur_local) d.jur = { ...d.jur, local: updated.jur_local };
+  // Atualiza dados estruturados
+  if (updated.pa_nome)      d.pa  = { ...d.pa,  nome:      updated.pa_nome      };
+  if (updated.pa_doc)       d.pa  = { ...d.pa,  doc:       updated.pa_doc       };
+  if (updated.pa_prof)      d.pa  = { ...d.pa,  prof:      updated.pa_prof      };
+  if (updated.pa_end)       d.pa  = { ...d.pa,  end:       updated.pa_end       };
+  if (updated.pa_tel)       d.pa  = { ...d.pa,  tel:       updated.pa_tel       };
+  if (updated.pa_email)     d.pa  = { ...d.pa,  email:     updated.pa_email     };
+  if (updated.pb_nome)      d.pb  = { ...d.pb,  nome:      updated.pb_nome      };
+  if (updated.pb_doc)       d.pb  = { ...d.pb,  doc:       updated.pb_doc       };
+  if (updated.pb_prof)      d.pb  = { ...d.pb,  prof:      updated.pb_prof      };
+  if (updated.pb_end)       d.pb  = { ...d.pb,  end:       updated.pb_end       };
+  if (updated.pb_tel)       d.pb  = { ...d.pb,  tel:       updated.pb_tel       };
+  if (updated.pb_email)     d.pb  = { ...d.pb,  email:     updated.pb_email     };
+  if (updated.val_total)    d.val = { ...d.val, total:     updated.val_total    };
+  if (updated.val_forma)    d.val = { ...d.val, forma:     updated.val_forma    };
+  if (updated.val_venc)     d.val = { ...d.val, venc:      updated.val_venc     };
+  if (updated.val_banco)    d.val = { ...d.val, banco:     updated.val_banco    };
+  if (updated.val_multa)    d.val = { ...d.val, multa:     updated.val_multa    };
+  if (updated.val_juros)    d.val = { ...d.val, juros:     updated.val_juros    };
+  if (updated.obj_desc)     d.obj = { ...d.obj, desc:      updated.obj_desc     };
+  if (updated.obj_local)    d.obj = { ...d.obj, local:     updated.obj_local    };
+  if (updated.obj_obrig_a)  d.obj = { ...d.obj, obrig_a:   updated.obj_obrig_a  };
+  if (updated.obj_obrig_b)  d.obj = { ...d.obj, obrig_b:   updated.obj_obrig_b  };
+  if (updated.obj_entregaveis) d.obj = { ...d.obj, entregaveis: updated.obj_entregaveis };
+  if (updated.jur_foro)     d.jur = { ...d.jur, foro:      updated.jur_foro     };
+  if (updated.jur_local)    d.jur = { ...d.jur, local:     updated.jur_local    };
+  if (updated.jur_rescisao) d.jur = { ...d.jur, rescisao:  updated.jur_rescisao };
+  if (updated.jur_multa_resc) d.jur = { ...d.jur, multa_resc: updated.jur_multa_resc };
+  if (updated.jur_extra)    d.jur = { ...d.jur, extra:     updated.jur_extra    };
   d.editedAt = new Date().toISOString();
 
-  // Para docs de IA, salva o HTML editado diretamente
+  // Para docs de IA — salva o HTML editado diretamente (remove spans mas mantém texto)
   if (d.generatedByAI) {
-    // Remove os spans de edição, mantém o texto
     const tmp = document.createElement('div');
     tmp.innerHTML = document.getElementById('edit-inline-content').innerHTML;
-    tmp.querySelectorAll('.edit-field').forEach(el => {
-      el.replaceWith(document.createTextNode(el.textContent));
+    tmp.querySelectorAll('.edit-field, .edit-para').forEach(el => {
+      const text = el.textContent;
+      const tag  = el.tagName.toLowerCase() === 'span' ? null : el.tagName.toLowerCase();
+      if (tag) {
+        const newEl = document.createElement(tag);
+        newEl.innerHTML = el.innerHTML.replace(/<span[^>]*>([^<]*)<\/span>/g, '$1');
+        el.replaceWith(newEl);
+      } else {
+        el.replaceWith(document.createTextNode(text));
+      }
     });
     d.html = tmp.innerHTML;
   } else {
-    // Para templates, regenera com os dados atualizados
-    const now = new Date();
+    // Para templates — regenera com dados atualizados
+    const now     = new Date();
     const dateStr = now.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
-    const roleA = getRoleA(d.type);
-    const roleB = getRoleB(d.type);
+    const roleA   = getRoleA(d.type);
+    const roleB   = getRoleB(d.type);
     const vigText = d.obj.vigencia
       ? `por prazo ${d.obj.vigencia === 'indeterminado' ? 'indeterminado' : 'determinado de ' + d.obj.vigencia}`
       : `de ${d.obj.inicio || dateStr} a ${d.obj.fim || 'indeterminado'}`;
     d.html = buildDocHTML({
       num: d.id, docTitle: getDocTitle(d.type), dateStr,
       pa: d.pa, pb: d.pb,
-      t1: { nome:'___________________________', doc:'___________________' },
-      t2: { nome:'___________________________', doc:'___________________' },
+      t1: { nome: null, doc: null },
+      t2: { nome: null, doc: null },
       obj: d.obj, val: d.val, jur: d.jur,
       roleA, roleB, vigText,
       extraClauses: '', finalClauseN: 6, typeInfo: d.typeInfo, type: d.type,
@@ -2553,11 +2625,51 @@ function getRoleB(type) {
 function valorExtenso(val) {
   if (!val) return 'valor a ser definido';
   const n = parseFloat(val.replace(/\./g,'').replace(',','.'));
-  if (isNaN(n) || n === 0) return val + ' reais';
+  if (isNaN(n) || n === 0) return 'valor a ser definido';
+
+  const unidades  = ['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+  const dezenas   = ['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+  const centenas  = ['','cem','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+
+  function porExtenso(num) {
+    if (num === 0)   return '';
+    if (num === 100) return 'cem';
+    if (num < 20)    return unidades[num];
+    if (num < 100) {
+      const d = Math.floor(num / 10);
+      const u = num % 10;
+      return dezenas[d] + (u ? ' e ' + unidades[u] : '');
+    }
+    const c  = Math.floor(num / 100);
+    const resto = num % 100;
+    return centenas[c] + (resto ? ' e ' + porExtenso(resto) : '');
+  }
+
   const inteiro = Math.floor(n);
-  const dec = Math.round((n - inteiro) * 100);
-  const numStr = inteiro.toLocaleString('pt-BR');
-  return `${val} reais (${numStr}${dec > 0 ? ` reais e ${dec} centavos` : ' reais'})`;
+  const centavos = Math.round((n - inteiro) * 100);
+
+  let textoInteiro = '';
+  if (inteiro === 0) {
+    textoInteiro = 'zero';
+  } else if (inteiro < 1000) {
+    textoInteiro = porExtenso(inteiro) + (inteiro === 1 ? ' real' : ' reais');
+  } else if (inteiro < 1000000) {
+    const mil   = Math.floor(inteiro / 1000);
+    const resto = inteiro % 1000;
+    textoInteiro = (mil === 1 ? 'mil' : porExtenso(mil) + ' mil')
+      + (resto ? ' e ' + porExtenso(resto) : '')
+      + (inteiro === 1000 ? ' reais' : ' reais');
+  } else {
+    const mi    = Math.floor(inteiro / 1000000);
+    const resto = inteiro % 1000000;
+    textoInteiro = porExtenso(mi) + (mi === 1 ? ' milhão' : ' milhões')
+      + (resto ? ' e ' + porExtenso(resto) : '')
+      + ' de reais';
+  }
+
+  if (centavos === 0) return textoInteiro;
+  const textoCent = porExtenso(centavos) + (centavos === 1 ? ' centavo' : ' centavos');
+  return inteiro === 0 ? textoCent : textoInteiro + ' e ' + textoCent;
 }
 
 function formatDate(d) {
