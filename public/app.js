@@ -117,9 +117,78 @@ function showAuth(tab = 'login') {
 function hideAuth() {
   document.getElementById('auth-overlay').style.display = 'none';
 }
+
+// ── Menu mobile — abre/fecha + overlay para fechar ao clicar fora ──
 function toggleLandNav() {
-  const nav = document.getElementById('land-mobile-nav');
-  nav.style.display = nav.style.display === 'none' ? 'flex' : 'none';
+  const nav     = document.getElementById('land-mobile-nav');
+  const overlay = document.getElementById('land-nav-overlay');
+  const btn     = document.getElementById('land-hamburger');
+  const isOpen  = nav.style.display !== 'none' && nav.style.display !== '';
+  if (isOpen) {
+    nav.style.display     = 'none';
+    overlay.style.display = 'none';
+    if (btn) btn.textContent = '☰';
+  } else {
+    nav.style.display     = 'flex';
+    overlay.style.display = 'block';
+    if (btn) btn.textContent = '✕';
+  }
+}
+function closeLandNav() {
+  const nav     = document.getElementById('land-mobile-nav');
+  const overlay = document.getElementById('land-nav-overlay');
+  const btn     = document.getElementById('land-hamburger');
+  if (nav)     nav.style.display     = 'none';
+  if (overlay) overlay.style.display = 'none';
+  if (btn)     btn.textContent       = '☰';
+}
+
+// ── Modais institucionais ──
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeModalById(id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.display = 'none'; document.body.style.overflow = ''; }
+}
+function closeModal(e, overlay) {
+  if (e.target === overlay) closeModalById(overlay.id);
+}
+
+// ── FAQ accordion ──
+function toggleFaq(el) {
+  const a = el.querySelector('.inst-faq-a');
+  const s = el.querySelector('.inst-faq-q span');
+  const open = a.style.display === 'block';
+  // Fecha todos
+  document.querySelectorAll('.inst-faq-a').forEach(x => x.style.display = 'none');
+  document.querySelectorAll('.inst-faq-q span').forEach(x => x.textContent = '+');
+  // Abre este se estava fechado
+  if (!open) { a.style.display = 'block'; if (s) s.textContent = '−'; }
+}
+
+// ── Toggle testemunhas ──
+let testemunhasAtivas = false;
+function toggleTestemunhas() {
+  testemunhasAtivas = !testemunhasAtivas;
+  const fields = document.getElementById('test-fields');
+  const label  = document.getElementById('test-toggle-label');
+  const toggle = document.getElementById('test-toggle');
+  if (testemunhasAtivas) {
+    fields.style.display  = 'block';
+    label.textContent     = 'Incluir no documento';
+    toggle.classList.add('active');
+  } else {
+    fields.style.display  = 'none';
+    label.textContent     = 'Não incluir';
+    toggle.classList.remove('active');
+    // Limpa os campos
+    ['test1_nome','test1_doc','test2_nome','test2_doc'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -416,6 +485,17 @@ function resetWizard() {
   document.querySelectorAll('.checkbox-item').forEach(c => c.classList.remove('checked'));
   document.querySelectorAll('.checkbox-item input[type=checkbox]').forEach(c => c.checked = false);
   document.querySelectorAll('.checkbox-item .check-box').forEach(c => c.textContent = '');
+  // Reset testemunhas toggle
+  testemunhasAtivas = false;
+  const tf = document.getElementById('test-fields');
+  const tl = document.getElementById('test-toggle-label');
+  const tt = document.getElementById('test-toggle');
+  if (tf) tf.style.display = 'none';
+  if (tl) tl.textContent = 'Não incluir';
+  if (tt) tt.classList.remove('active');
+  ['test1_nome','test1_doc','test2_nome','test2_doc'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
 }
 
 function wizardNext() {
@@ -488,8 +568,12 @@ function generateDocument() {
 
   const pa = buildParty('p_a');
   const pb = buildParty('p_b');
-  const t1 = { nome: V('test1_nome') || '___________________________', doc: V('test1_doc') || '___________________' };
-  const t2 = { nome: V('test2_nome') || '___________________________', doc: V('test2_doc') || '___________________' };
+  const t1 = testemunhasAtivas
+    ? { nome: V('test1_nome') || '___________________________', doc: V('test1_doc') || '___________________' }
+    : { nome: null, doc: null };
+  const t2 = testemunhasAtivas
+    ? { nome: V('test2_nome') || '___________________________', doc: V('test2_doc') || '___________________' }
+    : { nome: null, doc: null };
 
   const obj = {
     desc:        V('obj_desc')        || 'objeto conforme acordado entre as partes',
@@ -658,11 +742,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
       </div>
       ${t === 'locacao_fiador' ? `<div class="sig-grid"><div class="sig-item"><div class="sig-line"></div><div class="sig-name">_____________________________</div><div class="sig-role">FIADOR</div><div class="sig-doc">CPF: _____________________</div></div><div class="sig-item"></div></div>` : ''}
-      <div class="witnesses-block">
+      ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
-      </div>
+      </div>` : ""}
     </div>
     ${aviso}`;
   }
@@ -758,11 +842,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CREDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DEVEDOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
       </div>
-      <div class="witnesses-block">
+      ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
-      </div>
+      </div>` : ""}
     </div>
     ${aviso}`;
   }
@@ -804,11 +888,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE DIVULGANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE RECEPTORA</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
       </div>
-      <div class="witnesses-block">
+      ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
-      </div>
+      </div>` : ""}
     </div>
     ${aviso}`;
   }
@@ -871,11 +955,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">CONTRATADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
       </div>
-      <div class="witnesses-block">
+      ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
-      </div>
+      </div>` : ""}
     </div>
     ${aviso}`;
   }
@@ -923,11 +1007,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">INFLUENCIADOR DIGITAL</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
       </div>
-      <div class="witnesses-block">
+      ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
-      </div>
+      </div>` : ""}
     </div>
     ${aviso}`;
   }
@@ -1668,107 +1752,119 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
 //  EDIÇÃO DE DOCUMENTO
 // ════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════
+//  EDIÇÃO INLINE — Estilo Word
+// ════════════════════════════════════════════════════════════════
+
 function editCurrentDoc() {
   if (!currentDocId) return;
-  const docData = currentDocs.find(d => d.id === currentDocId);
-  if (!docData) return;
+  const d = currentDocs.find(d => d.id === currentDocId);
+  if (!d) return;
 
-  // Preenche os campos de edição
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  set('edit_pa_nome',  docData.pa?.nome);
-  set('edit_pa_doc',   docData.pa?.doc);
-  set('edit_pa_prof',  docData.pa?.prof);
-  set('edit_pa_end',   docData.pa?.end);
-  set('edit_pa_tel',   docData.pa?.tel);
-  set('edit_pa_email', docData.pa?.email);
-  set('edit_pb_nome',  docData.pb?.nome);
-  set('edit_pb_doc',   docData.pb?.doc);
-  set('edit_pb_prof',  docData.pb?.prof);
-  set('edit_pb_end',   docData.pb?.end);
-  set('edit_pb_tel',   docData.pb?.tel);
-  set('edit_pb_email', docData.pb?.email);
-  set('edit_obj_desc', docData.obj?.desc);
-  set('edit_val_total',docData.val?.total);
-  set('edit_val_forma',docData.val?.forma);
-  set('edit_val_venc', docData.val?.venc);
-  set('edit_val_banco',docData.val?.banco);
-  set('edit_jur_foro', docData.jur?.foro);
-  set('edit_jur_local',docData.jur?.local);
-  set('edit_jur_extra',docData.jur?.extra);
+  // Monta HTML com campos editáveis inline
+  const editableHtml = makeEditableHTML(d.html, d);
+  document.getElementById('edit-inline-content').innerHTML = editableHtml;
 
-  // Pré-visualização inicial
-  document.getElementById('edit-preview-content').innerHTML = docData.html;
-
-  // Live preview
-  document.querySelectorAll('#page-edit input, #page-edit textarea').forEach(input => {
-    input.addEventListener('input', updateEditPreview);
-  });
+  // Foca no primeiro campo editável
+  const first = document.querySelector('.edit-field');
+  if (first) setTimeout(() => first.focus(), 300);
 
   gotoPage('edit');
 }
 
-function updateEditPreview() {
-  // Atualiza preview em tempo real baseado nos campos
-  const d = currentDocs.find(d => d.id === currentDocId);
-  if (!d) return;
+function makeEditableHTML(html, d) {
+  // Cria versão editável: substitui valores por spans contenteditable
+  let result = html;
 
-  const preview = document.getElementById('edit-preview-content');
-  let html = d.html;
-
-  const G = id => document.getElementById(id)?.value || '';
-
-  // Substituições simples no HTML para preview
-  const replacements = [
-    [d.pa?.nome, G('edit_pa_nome')],
-    [d.pb?.nome, G('edit_pb_nome')],
-    [d.pa?.doc,  G('edit_pa_doc')],
-    [d.pb?.doc,  G('edit_pb_doc')],
-    [d.pa?.end,  G('edit_pa_end')],
-    [d.pb?.end,  G('edit_pb_end')],
-    [d.val?.total, G('edit_val_total')],
-    [d.val?.banco, G('edit_val_banco')],
-    [d.obj?.desc,  G('edit_obj_desc')],
+  // Campos editáveis com data-field para identificar
+  const fields = [
+    { val: d.pa?.nome,  field: 'pa_nome'  },
+    { val: d.pa?.doc,   field: 'pa_doc'   },
+    { val: d.pa?.prof,  field: 'pa_prof'  },
+    { val: d.pa?.end,   field: 'pa_end'   },
+    { val: d.pa?.tel,   field: 'pa_tel'   },
+    { val: d.pa?.email, field: 'pa_email' },
+    { val: d.pb?.nome,  field: 'pb_nome'  },
+    { val: d.pb?.doc,   field: 'pb_doc'   },
+    { val: d.pb?.prof,  field: 'pb_prof'  },
+    { val: d.pb?.end,   field: 'pb_end'   },
+    { val: d.pb?.tel,   field: 'pb_tel'   },
+    { val: d.pb?.email, field: 'pb_email' },
+    { val: d.val?.total, field: 'val_total' },
+    { val: d.val?.forma, field: 'val_forma' },
+    { val: d.val?.venc,  field: 'val_venc'  },
+    { val: d.val?.banco, field: 'val_banco' },
+    { val: d.obj?.desc,  field: 'obj_desc'  },
+    { val: d.jur?.foro,  field: 'jur_foro'  },
+    { val: d.jur?.local, field: 'jur_local' },
   ];
 
-  replacements.forEach(([old, novo]) => {
-    if (old && novo && old !== novo) {
-      html = html.split(old).join(novo);
-    }
+  fields.forEach(({ val, field }) => {
+    if (!val || val === 'undefined' || val === '—') return;
+    // Escapa caracteres especiais para regex
+    const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'g');
+    result = result.replace(regex, `<span class="edit-field" contenteditable="true" data-field="${field}" data-original="${val}" onblur="onFieldEdit(this)" oninput="markDirty()">${val}</span>`);
   });
 
-  preview.innerHTML = html;
+  return result;
+}
+
+function onFieldEdit(el) {
+  // Marca documento como modificado
+  el.dataset.modified = 'true';
+}
+
+function markDirty() {
+  // Visual indicator that doc has unsaved changes
+  const btn = document.querySelector('#page-edit .btn-sm');
+  if (btn && !btn.textContent.includes('*')) btn.textContent = '💾 Salvar*';
 }
 
 function saveEdit() {
   const d = currentDocs.find(d => d.id === currentDocId);
   if (!d) return;
 
-  const G = id => document.getElementById(id)?.value || '';
+  // Coleta todos os campos editados inline
+  const fields = document.querySelectorAll('#edit-inline-content .edit-field');
+  const updated = {};
+  fields.forEach(el => {
+    updated[el.dataset.field] = el.textContent.trim();
+  });
 
-  // Atualiza os dados
-  d.pa = { ...d.pa, nome: G('edit_pa_nome'), doc: G('edit_pa_doc'), prof: G('edit_pa_prof'), end: G('edit_pa_end'), tel: G('edit_pa_tel'), email: G('edit_pa_email') };
-  d.pb = { ...d.pb, nome: G('edit_pb_nome'), doc: G('edit_pb_doc'), prof: G('edit_pb_prof'), end: G('edit_pb_end'), tel: G('edit_pb_tel'), email: G('edit_pb_email') };
-  d.obj = { ...d.obj, desc: G('edit_obj_desc') };
-  d.val = { ...d.val, total: G('edit_val_total'), forma: G('edit_val_forma'), venc: G('edit_val_venc'), banco: G('edit_val_banco') };
-  d.jur = { ...d.jur, foro: G('edit_jur_foro'), local: G('edit_jur_local'), extra: G('edit_jur_extra') };
+  // Atualiza os dados do documento
+  if (updated.pa_nome)  d.pa = { ...d.pa, nome:  updated.pa_nome  };
+  if (updated.pa_doc)   d.pa = { ...d.pa, doc:   updated.pa_doc   };
+  if (updated.pa_prof)  d.pa = { ...d.pa, prof:  updated.pa_prof  };
+  if (updated.pa_end)   d.pa = { ...d.pa, end:   updated.pa_end   };
+  if (updated.pa_tel)   d.pa = { ...d.pa, tel:   updated.pa_tel   };
+  if (updated.pa_email) d.pa = { ...d.pa, email: updated.pa_email };
+  if (updated.pb_nome)  d.pb = { ...d.pb, nome:  updated.pb_nome  };
+  if (updated.pb_doc)   d.pb = { ...d.pb, doc:   updated.pb_doc   };
+  if (updated.pb_prof)  d.pb = { ...d.pb, prof:  updated.pb_prof  };
+  if (updated.pb_end)   d.pb = { ...d.pb, end:   updated.pb_end   };
+  if (updated.pb_tel)   d.pb = { ...d.pb, tel:   updated.pb_tel   };
+  if (updated.pb_email) d.pb = { ...d.pb, email: updated.pb_email };
+  if (updated.val_total) d.val = { ...d.val, total: updated.val_total };
+  if (updated.val_forma) d.val = { ...d.val, forma: updated.val_forma };
+  if (updated.val_venc)  d.val = { ...d.val, venc:  updated.val_venc  };
+  if (updated.val_banco) d.val = { ...d.val, banco: updated.val_banco };
+  if (updated.obj_desc)  d.obj = { ...d.obj, desc:  updated.obj_desc  };
+  if (updated.jur_foro)  d.jur = { ...d.jur, foro:  updated.jur_foro  };
+  if (updated.jur_local) d.jur = { ...d.jur, local: updated.jur_local };
   d.editedAt = new Date().toISOString();
 
-  // Documentos gerados pela IA — apenas atualiza o HTML com substituição de texto
-  // Documentos de template — regenera o HTML completo
+  // Para docs de IA, salva o HTML editado diretamente
   if (d.generatedByAI) {
-    // Para docs de IA, faz substituição direta no HTML existente
-    let html = d.html;
-    const oldPaNome = d.pa?.nome;
-    const oldPbNome = d.pb?.nome;
-    if (oldPaNome && G('edit_pa_nome') && oldPaNome !== G('edit_pa_nome')) {
-      html = html.split(oldPaNome).join(G('edit_pa_nome'));
-    }
-    if (oldPbNome && G('edit_pb_nome') && oldPbNome !== G('edit_pb_nome')) {
-      html = html.split(oldPbNome).join(G('edit_pb_nome'));
-    }
-    d.html = html;
+    // Remove os spans de edição, mantém o texto
+    const tmp = document.createElement('div');
+    tmp.innerHTML = document.getElementById('edit-inline-content').innerHTML;
+    tmp.querySelectorAll('.edit-field').forEach(el => {
+      el.replaceWith(document.createTextNode(el.textContent));
+    });
+    d.html = tmp.innerHTML;
   } else {
-    // Para docs de template, regenera o HTML completo
+    // Para templates, regenera com os dados atualizados
     const now = new Date();
     const dateStr = now.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
     const roleA = getRoleA(d.type);
@@ -1776,7 +1872,6 @@ function saveEdit() {
     const vigText = d.obj.vigencia
       ? `por prazo ${d.obj.vigencia === 'indeterminado' ? 'indeterminado' : 'determinado de ' + d.obj.vigencia}`
       : `de ${d.obj.inicio || dateStr} a ${d.obj.fim || 'indeterminado'}`;
-
     d.html = buildDocHTML({
       num: d.id, docTitle: getDocTitle(d.type), dateStr,
       pa: d.pa, pb: d.pb,
@@ -1792,6 +1887,11 @@ function saveEdit() {
     showNotif('Documento atualizado! ✏️', '✏️');
     viewDocument(d.id);
   });
+}
+
+function saveEditAndDownload() {
+  saveEdit();
+  setTimeout(() => downloadPDF(), 600);
 }
 
 function cancelEdit() { gotoPage('document'); viewDocument(currentDocId); }
