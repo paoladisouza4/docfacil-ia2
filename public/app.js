@@ -456,10 +456,8 @@ function selectType(id) {
   selectedType = id;
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('tc-' + id)?.classList.add('selected');
-  document.getElementById('role-a-label').textContent = getRoleA(id);
-  document.getElementById('role-b-label').textContent = getRoleB(id);
-  // Aplica configuração completa do wizard por tipo
-  applyWizardConfig(id);
+  // Aplica regras e config do wizard por tipo
+  applyWizardRules(id);
   updateStep3Hints(id);
 }
 
@@ -552,6 +550,27 @@ function toggleClause(el, id) {
 
 function resetWizard() {
   currentStep = 1; selectedType = '';
+  // Reset steps ativos para padrão completo
+  window._activeSteps = [1,2,3,4,5,6];
+  window._docTemParteB = true;
+  // Mostra tudo de volta
+  const pb = document.getElementById('parte-b-section');
+  const ts = document.getElementById('testemunhas-section');
+  const pf = document.getElementById('prazo-fields');
+  if (pb) pb.style.display = '';
+  if (ts) ts.style.display = '';
+  if (pf) pf.style.display = '';
+  ['obj_obrig_a','obj_obrig_b','obj_entregaveis'].forEach(id => {
+    const el = document.getElementById(id)?.closest('.field');
+    if (el) el.style.display = '';
+  });
+  // Reseta barra de progresso
+  for (let i = 1; i <= 6; i++) {
+    const ws = document.getElementById('ws-' + i);
+    const wc = document.getElementById('wc-' + i);
+    if (ws) ws.style.display = '';
+    if (wc) wc.style.display = i < 6 ? '' : 'none';
+  }
   updateWizardUI();
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.checkbox-item').forEach(c => c.classList.remove('checked'));
@@ -572,44 +591,67 @@ function resetWizard() {
 
 function wizardNext() {
   if (currentStep === 1 && !selectedType) { showNotif('Selecione um tipo de documento', '⚠️'); return; }
-  if (currentStep === 2 && (!V('p_a_nome') || !V('p_b_nome'))) { showNotif('Preencha os nomes das partes', '⚠️'); return; }
-  if (currentStep === 3 && !V('obj_desc')) { showNotif('Descreva o objeto do documento', '⚠️'); return; }
-  // Auto-preenche Foro e Local com cidade informada no step 3
+  if (currentStep === 2) {
+    if (!V('p_a_nome')) { showNotif('Preencha o nome da Parte A', '⚠️'); return; }
+    if (window._docTemParteB !== false && !V('p_b_nome')) { showNotif('Preencha o nome da Parte B', '⚠️'); return; }
+  }
+  if (currentStep === 3 && !V('obj_desc')) { showNotif('Preencha a descrição do documento', '⚠️'); return; }
+  // Auto-preenche Foro e Local com cidade do step 3
   if (currentStep === 3) {
-    const localExec = V('obj_local');
-    const foroEl    = document.getElementById('jur_foro');
+    const localExec  = V('obj_local');
+    const foroEl     = document.getElementById('jur_foro');
     const jurLocalEl = document.getElementById('jur_local');
-    if (localExec && foroEl && !foroEl.value)     foroEl.value    = localExec;
+    if (localExec && foroEl     && !foroEl.value)     foroEl.value     = localExec;
     if (localExec && jurLocalEl && !jurLocalEl.value) jurLocalEl.value = localExec;
   }
 
   if (currentStep === 1 && selectedType.startsWith('gen_')) { openIAModal(); return; }
-  if (currentStep === TOTAL_STEPS) { generateDocument(); return; }
 
-  currentStep++;
+  // Avança para próximo step ATIVO
+  const activeSteps = window._activeSteps || [1,2,3,4,5,6];
+  const curIdx = activeSteps.indexOf(currentStep);
+  if (curIdx === activeSteps.length - 1) { generateDocument(); return; }
+  currentStep = activeSteps[curIdx + 1];
   updateWizardUI();
 }
-function wizardBack() { if (currentStep > 1) { currentStep--; updateWizardUI(); } }
+function wizardBack() {
+  const activeSteps = window._activeSteps || [1,2,3,4,5,6];
+  const curIdx = activeSteps.indexOf(currentStep);
+  if (curIdx > 0) { currentStep = activeSteps[curIdx - 1]; updateWizardUI(); }
+}
 
 function updateWizardUI() {
-  for (let i = 1; i <= TOTAL_STEPS; i++) {
+  const activeSteps = window._activeSteps || [1,2,3,4,5,6];
+  // Mostra/oculta bodies dos steps
+  for (let i = 1; i <= 6; i++) {
     const el = document.getElementById('step-' + i);
     if (el) el.style.display = i === currentStep ? '' : 'none';
   }
-  for (let i = 1; i <= TOTAL_STEPS; i++) {
+  // Atualiza barra de progresso — só mostra steps ativos
+  for (let i = 1; i <= 6; i++) {
     const ws = document.getElementById('ws-' + i);
     if (!ws) continue;
+    const isActive = activeSteps.includes(i);
+    ws.style.display = isActive ? '' : 'none';
     ws.classList.remove('active', 'done');
     if (i === currentStep) ws.classList.add('active');
-    if (i < currentStep)  ws.classList.add('done');
+    if (i < currentStep && isActive) ws.classList.add('done');
     const wc = document.getElementById('wc-' + i);
-    if (wc) wc.classList.toggle('done', i < currentStep);
+    if (wc) {
+      const nextActive = activeSteps.includes(i + 1);
+      wc.style.display = (isActive && nextActive) ? '' : 'none';
+      wc.classList.toggle('done', i < currentStep);
+    }
   }
   document.getElementById('btn-back').style.visibility = currentStep > 1 ? 'visible' : 'hidden';
-  document.getElementById('step-indicator').textContent = `Etapa ${currentStep} de ${TOTAL_STEPS}`;
+  // Indicador e botão
+  const curIdx = activeSteps.indexOf(currentStep);
+  const isLast = curIdx === activeSteps.length - 1;
+  const indEl  = document.getElementById('step-indicator');
+  if (indEl) indEl.textContent = `Etapa ${curIdx + 1} de ${activeSteps.length}`;
   const btn = document.getElementById('btn-next');
-  btn.innerHTML = currentStep === TOTAL_STEPS ? '✨ Gerar Documento' : 'Próximo →';
-  btn.style.background = currentStep === TOTAL_STEPS ? 'var(--green)' : 'var(--accent)';
+  btn.innerHTML = isLast ? '✨ Gerar Documento' : 'Próximo →';
+  btn.style.background = isLast ? 'var(--green)' : 'var(--accent)';
 }
 
 function quickCreate(typeId) {
@@ -1017,6 +1059,162 @@ function applyWizardConfig(typeId) {
   if (obrigBField) obrigBField.style.display = cfg.mostrarObrig ? '' : 'none';
 }
 
+
+// ════════════════════════════════════════════════════════════════
+//  REGRAS DO WIZARD — o que mostrar por tipo de documento
+// ════════════════════════════════════════════════════════════════
+const DOC_WIZARD_RULES = {
+  // tem_parte_b: mostra seção de Parte B
+  // tem_valores: mostra etapa de valores
+  // tem_clausulas: mostra etapa de cláusulas
+  // tem_juridico: mostra etapa jurídica
+  // tem_obrigacoes: mostra campos de obrigações no step 3
+  // tem_prazo: mostra campos de prazo/vigência no step 3
+  // uma_parte: documento de uma só parte (declarações, currículos)
+
+  // Contratos — duas partes, tudo
+  servico:        { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  trabalho_pj:    { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  freelancer:     { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  autonomo:       { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  aluguel_res:    { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  aluguel_com:    { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  locacao_simples:{ tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  locacao_fiador: { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  compravenda:    { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:false, tem_prazo:false },
+  parceria:       { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  plano_parceria: { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  influenciador:  { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  nda:            { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  comissao:       { tem_parte_b:true,  tem_valores:true,  tem_clausulas:true,  tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  estagio:        { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+  // Imobiliário
+  recibo_aluguel: { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:true  },
+  vistoria:       { tem_parte_b:true,  tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:true  },
+  notif_desocupacao:{ tem_parte_b:true,tem_valores:false, tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:false },
+  acordo_inadimpl:{ tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:false },
+  // Financeiro
+  recibo:         { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  quitacao:       { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  confissao_divida:{ tem_parte_b:true, tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  parcelamento:   { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  nota_servico:   { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  // Trabalho — uma parte
+  curriculo:      { tem_parte_b:false, tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:true,  tem_prazo:false },
+  carta_apres:    { tem_parte_b:true,  tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:true,  tem_prazo:false },
+  carta_demissao: { tem_parte_b:true,  tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  decl_experiencia:{ tem_parte_b:true, tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:true,  tem_prazo:true  },
+  // Declarações — uma parte
+  decl_residencia:{ tem_parte_b:false, tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  decl_renda:     { tem_parte_b:false, tem_valores:true,  tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  decl_informal:  { tem_parte_b:false, tem_valores:true,  tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  decl_comparec:  { tem_parte_b:true,  tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:true  },
+  decl_respons:   { tem_parte_b:false, tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  decl_uniao:     { tem_parte_b:true,  tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:true  },
+  // Jurídico
+  lgpd_termo:     { tem_parte_b:true,  tem_valores:false, tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:true  },
+  politica_priv:  { tem_parte_b:false, tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:true,  tem_prazo:false },
+  termo_uso:      { tem_parte_b:false, tem_valores:false, tem_clausulas:false, tem_juridico:false, tem_obrigacoes:true,  tem_prazo:false },
+  notif_extra:    { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:false, tem_prazo:false },
+  acordo_amigavel:{ tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:false },
+  // Empresarial
+  abertura_empresa:{ tem_parte_b:true, tem_valores:true,  tem_clausulas:false, tem_juridico:false, tem_obrigacoes:false, tem_prazo:false },
+  contrato_social: { tem_parte_b:true, tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:false },
+  acordo_socios:  { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:false },
+  termo_invest:   { tem_parte_b:true,  tem_valores:true,  tem_clausulas:false, tem_juridico:true,  tem_obrigacoes:true,  tem_prazo:true  },
+};
+const DOC_WIZARD_DEFAULT = { tem_parte_b:true, tem_valores:true, tem_clausulas:true, tem_juridico:true, tem_obrigacoes:true, tem_prazo:true };
+
+// Retorna os steps ativos para o tipo selecionado
+function getActiveSteps(typeId) {
+  const r = DOC_WIZARD_RULES[typeId] || DOC_WIZARD_DEFAULT;
+  const steps = [1, 2]; // Tipo e Partes sempre
+  if (r.tem_prazo || r.tem_obrigacoes) steps.push(3); // Objeto
+  else steps.push(3); // sempre mostra step 3 (descrição obrigatória)
+  if (r.tem_valores) steps.push(4);
+  if (r.tem_clausulas) steps.push(5);
+  if (r.tem_juridico) steps.push(6);
+  return steps;
+}
+
+function applyWizardRules(typeId) {
+  const r = DOC_WIZARD_RULES[typeId] || DOC_WIZARD_DEFAULT;
+  const cfg = WIZARD_CONFIG[typeId] || WIZARD_DEFAULT;
+
+  // ── Parte B ──
+  const parteBSection = document.getElementById('parte-b-section');
+  const testemunhasSection = document.getElementById('testemunhas-section');
+  if (parteBSection) parteBSection.style.display = r.tem_parte_b ? '' : 'none';
+  if (testemunhasSection) testemunhasSection.style.display = r.tem_parte_b ? '' : 'none';
+
+  // Validação step 2: se não tem parte B, não exige p_b_nome
+  window._docTemParteB = r.tem_parte_b;
+
+  // ── Step 3: campos condicionais ──
+  const obrigAField = document.getElementById('obj_obrig_a')?.closest('.field');
+  const obrigBField = document.getElementById('obj_obrig_b')?.closest('.field');
+  const entregField = document.getElementById('obj_entregaveis')?.closest('.field');
+  const prazoFields = document.getElementById('prazo-fields');
+  if (obrigAField) obrigAField.style.display = r.tem_obrigacoes ? '' : 'none';
+  if (obrigBField) obrigBField.style.display = (r.tem_obrigacoes && r.tem_parte_b) ? '' : 'none';
+  if (entregField) entregField.style.display = r.tem_obrigacoes ? '' : 'none';
+  if (prazoFields) prazoFields.style.display = r.tem_prazo ? '' : 'none';
+
+  // ── Steps na barra de progresso ──
+  const activeSteps = getActiveSteps(typeId);
+  const totalSteps = activeSteps.length;
+  window._activeSteps = activeSteps;
+  window._totalSteps = totalSteps;
+
+  // Atualiza indicador de steps
+  updateStepIndicator();
+
+  // ── Aplica títulos e subtítulos ──
+  const s2title = document.querySelector('#step-2 .wizard-title');
+  const s2sub   = document.querySelector('#step-2 .wizard-subtitle');
+  const s3title = document.querySelector('#step-3 .wizard-title');
+  const s3sub   = document.querySelector('#step-3 .wizard-subtitle');
+  const s4title = document.querySelector('#step-4 .wizard-title');
+  const s4sub   = document.querySelector('#step-4 .wizard-subtitle');
+  const s6title = document.querySelector('#step-6 .wizard-title');
+  const s6sub   = document.querySelector('#step-6 .wizard-subtitle');
+
+  if (s2title) s2title.textContent = cfg.step2?.title || 'Dados das Partes';
+  if (s2sub)   s2sub.textContent   = cfg.step2?.sub   || 'Informe os dados das partes';
+  if (s3title) s3title.textContent = cfg.step3?.title || 'Objeto e Prazo';
+  if (s3sub)   s3sub.textContent   = cfg.step3?.sub   || 'Descreva o objeto';
+  if (s4title) s4title.textContent = cfg.step4?.title || 'Valores e Pagamento';
+  if (s4sub)   s4sub.textContent   = cfg.step4?.sub   || 'Defina as condições financeiras';
+  if (s6title) s6title.textContent = cfg.step6?.title || 'Dados Finais';
+  if (s6sub)   s6sub.textContent   = cfg.step6?.sub   || 'Informações legais e foro';
+
+  // ── Label Parte A ──
+  const roleALabel = document.getElementById('role-a-label');
+  if (roleALabel) roleALabel.textContent = getRoleA(typeId);
+  const roleBLabel = document.getElementById('role-b-label');
+  if (roleBLabel) roleBLabel.textContent = getRoleB(typeId);
+
+  // ── Atualiza barra de progresso visual ──
+  updateWizardProgressBar(activeSteps);
+}
+
+function updateWizardProgressBar(activeSteps) {
+  // Mostra/oculta steps e conectores na barra
+  for (let i = 1; i <= 6; i++) {
+    const step = document.getElementById('ws-' + i);
+    const conn = document.getElementById('wc-' + i);
+    if (step) step.style.display = activeSteps.includes(i) ? '' : 'none';
+    if (conn) conn.style.display = activeSteps.includes(i) && activeSteps.includes(i+1) ? '' : 'none';
+  }
+}
+
+function updateStepIndicator() {
+  const activeSteps = window._activeSteps || [1,2,3,4,5,6];
+  const pos = activeSteps.indexOf(currentStep) + 1;
+  const el = document.getElementById('step-indicator');
+  if (el) el.textContent = `Etapa ${pos} de ${activeSteps.length}`;
+}
+
 function getAllTypes() { return Object.values(DOC_TYPES).flat(); }
 
 function generateDocument() {
@@ -1027,7 +1225,7 @@ function generateDocument() {
   const num     = `CTR-${now.getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`;
 
   const pa = buildParty('p_a');
-  const pb = buildParty('p_b');
+  const pb = window._docTemParteB !== false ? buildParty('p_b') : { nome:'', doc:'', nac:'', est:'', prof:'', end:'', tel:'', email:'', rg:'' };
   const t1 = testemunhasAtivas
     ? { nome: V('test1_nome') || '___________________________', doc: V('test1_doc') || '___________________' }
     : { nome: null, doc: null };

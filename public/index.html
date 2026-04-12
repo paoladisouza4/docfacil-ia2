@@ -439,6 +439,7 @@
           <div class="field"><label>Telefone / WhatsApp</label><input id="p_a_tel" placeholder="(11) 99999-9999"/></div>
           <div class="field"><label>E-mail</label><input id="p_a_email" type="email" placeholder="email@exemplo.com"/></div>
         </div>
+        <div id="parte-b-section">
         <hr class="section-divider"/>
         <div class="section-label">Parte B — <span id="role-b-label">Contratado</span></div>
         <div class="form-grid">
@@ -452,6 +453,8 @@
           <div class="field"><label>Telefone / WhatsApp</label><input id="p_b_tel" placeholder="(11) 99999-9999"/></div>
           <div class="field"><label>E-mail</label><input id="p_b_email" type="email" placeholder="email@exemplo.com"/></div>
         </div>
+        </div><!-- /parte-b-section -->
+        <div id="testemunhas-section">
         <hr class="section-divider"/>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div class="section-label" style="margin-bottom:0;">Testemunhas</div>
@@ -473,14 +476,19 @@
         </div>
       </div>
 
+        </div><!-- /testemunhas-section -->
+      </div><!-- /step-2 -->
+
       <div id="step-3" class="wizard-body" style="display:none;">
         <div class="wizard-title">Objeto e Prazo</div>
         <div class="wizard-subtitle">Descreva detalhadamente o que está sendo contratado</div>
         <div class="form-grid">
           <div class="field form-full"><label>Descrição do objeto / serviço *</label><textarea id="obj_desc" rows="4" placeholder="Descreva com detalhes o serviço, produto ou imóvel..."></textarea></div>
+          <div id="prazo-fields">
           <div class="field"><label>Data de início</label><input id="obj_inicio" type="date"/></div>
           <div class="field"><label>Data de término</label><input id="obj_fim" type="date"/></div>
           <div class="field"><label>Vigência</label><select id="obj_vigencia"><option value="">Selecionar...</option><option value="determinado">Prazo determinado</option><option value="indeterminado">Prazo indeterminado</option><option value="12 meses">12 meses</option><option value="6 meses">6 meses</option><option value="3 meses">3 meses</option><option value="1 mês">1 mês</option></select></div>
+          </div><!-- /prazo-fields -->
           <div class="field"><label>Local de execução</label><input id="obj_local" placeholder="Ex: São Paulo - SP ou Remoto"/></div>
           <div class="field form-full"><label>Obrigações da Parte A</label><textarea id="obj_obrig_a" rows="2" placeholder="O que a Parte A deve fazer..."></textarea></div>
           <div class="field form-full"><label>Obrigações da Parte B</label><textarea id="obj_obrig_b" rows="2" placeholder="O que a Parte B deve entregar..."></textarea></div>
