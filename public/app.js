@@ -103,7 +103,7 @@ const CLAUSES = [
   { id:'antisuborno',   name:'Anticorrupção',                 desc:'Conformidade com Lei 12.846/2013' },
   { id:'resolucao',     name:'Resolução Antecipada',          desc:'Encerramento antecipado por mútuo acordo' },
   { id:'penalidade',    name:'Penalidade por Descumprimento', desc:'Sanções em caso de inadimplemento' },
-  { id:'testemunha',    name:'Testemunhas Instrumentárias',   desc:'Inclusão formal de testemunhas' },
+  // Testemunhas gerenciadas no Step 2 com toggle dedicado
 ];
 
 // ════════════════════════════════════════════════════════════════
@@ -458,6 +458,79 @@ function selectType(id) {
   document.getElementById('tc-' + id)?.classList.add('selected');
   document.getElementById('role-a-label').textContent = getRoleA(id);
   document.getElementById('role-b-label').textContent = getRoleB(id);
+  // Atualiza placeholders do step 3 conforme o tipo
+  updateStep3Hints(id);
+  // Atualiza título do step 2 conforme o tipo
+  updateStep2Title(id);
+}
+
+function updateStep2Title(id) {
+  const titulos2 = {
+    aluguel_res: 'Locador e Locatário', aluguel_com: 'Locador e Locatário',
+    locacao_simples: 'Locador e Locatário', locacao_fiador: 'Locador, Locatário e Fiador',
+    compravenda: 'Vendedor e Comprador', parceria: 'Parceiros',
+    plano_parceria: 'Parceiros', comissao: 'Comitente e Comissionado',
+    nda: 'Partes do Acordo', estagio: 'Empresa e Estagiário',
+    contrato_social: 'Sócios', acordo_socios: 'Sócios',
+    termo_invest: 'Investidor e Empresa', recibo: 'Recebedor e Pagante',
+    recibo_aluguel: 'Locador e Locatário', quitacao: 'Credor e Devedor',
+    confissao_divida: 'Credor e Devedor', parcelamento: 'Credor e Devedor',
+    notif_extra: 'Notificante e Notificado', acordo_amigavel: 'Partes do Acordo',
+    influenciador: 'Marca e Influenciador',
+  };
+  const sub = document.querySelector('#step-2 .wizard-subtitle');
+  if (sub) sub.textContent = 'Informe os dados de: ' + (titulos2[id] || 'ambas as partes');
+}
+
+function updateStep3Hints(id) {
+  const hints = {
+    aluguel_res:  { desc: 'Ex: Apartamento 2 quartos, Rua das Flores 123, Apto 45, Bairro Centro - Cidade/UF, CEP 00000-000', obrigA: 'Ex: Entregar o imóvel limpo e em boas condições, realizar reparos necessários antes da entrega', obrigB: 'Ex: Pagar o aluguel até o dia acordado, conservar o imóvel e devolvê-lo nas mesmas condições' },
+    aluguel_com:  { desc: 'Ex: Sala comercial 80m², Av. Brasil 500, Sala 12, Centro Empresarial - Cidade/UF', obrigA: 'Ex: Entregar o imóvel em condições de uso comercial, garantir acesso e funcionamento', obrigB: 'Ex: Pagar o aluguel e taxas condominiais, usar o imóvel apenas para fins comerciais' },
+    locacao_simples: { desc: 'Ex: Casa 3 quartos, Rua das Palmeiras 45, Jardim América - Cidade/UF', obrigA: 'Ex: Entregar o imóvel em boas condições e garantir a posse tranquila', obrigB: 'Ex: Pagar o aluguel pontualmente e conservar o imóvel' },
+    compravenda:  { desc: 'Ex: Veículo Fiat Uno 2018, placa ABC-1234, cor branca, RENAVAM 00000000000. OU: Lote 15, Quadra 8, Jardim das Flores - Cidade/UF', obrigA: 'Ex: Entregar o bem livre de dívidas, transferir a propriedade e fornecer todos os documentos', obrigB: 'Ex: Efetuar o pagamento conforme acordado e receber o bem nas condições descritas' },
+    servico:      { desc: 'Ex: Desenvolvimento de site institucional com até 10 páginas, painel administrativo e integração com redes sociais', obrigA: 'Ex: Efetuar os pagamentos nos prazos acordados e fornecer as informações e materiais necessários', obrigB: 'Ex: Executar os serviços com qualidade e nos prazos acordados, manter o contratante informado do andamento' },
+    freelancer:   { desc: 'Ex: Criação de identidade visual completa (logo, paleta de cores, tipografia e manual de marca)', obrigA: 'Ex: Pagar os honorários no prazo, fornecer briefing completo e aprovar ou solicitar revisões em até 5 dias úteis', obrigB: 'Ex: Entregar os arquivos nos formatos acordados, realizar até 3 rodadas de revisão e manter sigilo sobre o projeto' },
+    trabalho_pj:  { desc: 'Ex: Prestação de serviços de consultoria em gestão financeira, incluindo análise de balanços e relatórios mensais', obrigA: 'Ex: Efetuar o pagamento da nota fiscal no prazo, fornecer acesso às informações e sistemas necessários', obrigB: 'Ex: Emitir nota fiscal, cumprir os prazos, manter sigilo e pagar seus próprios impostos e contribuições' },
+    autonomo:     { desc: 'Ex: Serviços de eletricidade residencial, incluindo instalação de tomadas, interruptores e quadro de distribuição', obrigA: 'Ex: Efetuar o pagamento após conclusão dos serviços e fornecer os materiais necessários', obrigB: 'Ex: Executar os serviços com qualidade, usar EPI adequado e responsabilizar-se pelos materiais em sua posse' },
+    parceria:     { desc: 'Ex: Parceria para operação de loja de cosméticos na cidade de Foz do Iguaçu/PR, com divisão de responsabilidades comerciais e operacionais', obrigA: 'Ex: Fornecer o capital inicial, espaço físico e gestão administrativa da parceria', obrigB: 'Ex: Realizar as vendas, atender os clientes e executar as operações diárias do negócio' },
+    plano_parceria: { desc: 'Ex: Parceria para desenvolvimento e comercialização de software de gestão para pequenas empresas', obrigA: 'Ex: Desenvolver o produto, fornecer suporte técnico e realizar atualizações', obrigB: 'Ex: Realizar a prospecção de clientes, vendas e relacionamento comercial' },
+    influenciador: { desc: 'Ex: Criação e publicação de 4 posts no Instagram e 2 Reels por mês divulgando a marca X, com uso de hashtags e marcação do perfil oficial', obrigA: 'Ex: Fornecer os produtos, briefing criativo e aprovar os conteúdos antes da publicação', obrigB: 'Ex: Criar conteúdo autêntico, publicar nas datas acordadas e informar as métricas mensalmente' },
+    nda:          { desc: 'Ex: Informações sobre o projeto de desenvolvimento do aplicativo XYZ, incluindo código-fonte, base de clientes, estratégias de marketing e dados financeiros', obrigA: 'Ex: Compartilhar as informações necessárias para a avaliação do projeto de parceria', obrigB: 'Ex: Manter sigilo absoluto sobre todas as informações recebidas e utilizá-las apenas para avaliação da parceria' },
+    comissao:     { desc: 'Ex: Venda de planos de internet corporativa da empresa XYZ Telecom na região sul do Brasil', obrigA: 'Ex: Fornecer materiais de vendas, treinamento e pagar as comissões no prazo', obrigB: 'Ex: Prospectar clientes ativamente, apresentar os produtos com precisão e não representar concorrentes' },
+    estagio:      { desc: 'Ex: Estágio no setor de Marketing Digital, com atividades de criação de conteúdo, gestão de redes sociais e análise de métricas', obrigA: 'Ex: Designar supervisor, oferecer atividades compatíveis com a área de formação e conceder recesso remunerado', obrigB: 'Ex: Cumprir o horário, realizar as atividades com dedicação e manter sigilo sobre informações da empresa' },
+    recibo:       { desc: 'Ex: Pagamento referente à prestação de serviços de pintura residencial realizados em novembro de 2026', obrigA: '', obrigB: '' },
+    recibo_aluguel: { desc: 'Ex: Aluguel referente ao mês de novembro de 2026 do imóvel situado na Rua das Flores, 123 - Apto 45', obrigA: '', obrigB: '' },
+    confissao_divida: { desc: 'Ex: Valor referente a empréstimo pessoal concedido em outubro de 2026, acrescido de juros acordados', obrigA: '', obrigB: '' },
+    parcelamento: { desc: 'Ex: Saldo devedor de aluguel dos meses de setembro, outubro e novembro de 2026', obrigA: '', obrigB: '' },
+    quitacao:     { desc: 'Ex: Pagamento integral do contrato de prestação de serviços firmado em janeiro de 2026', obrigA: '', obrigB: '' },
+    contrato_social: { desc: 'Ex: Nome da empresa: XYZ Comércio e Serviços Ltda | Atividade: comércio varejista de artigos de vestuário', obrigA: 'Ex: Integralizar R$ X correspondente a X% do capital social e assumir a função de administrador', obrigB: 'Ex: Integralizar R$ X correspondente a X% do capital social e participar das decisões societárias' },
+    acordo_socios: { desc: 'Ex: Regulamentação das relações societárias da empresa XYZ Ltda, CNPJ 00.000.000/0001-00', obrigA: 'Ex: Responder pela gestão administrativa e financeira da empresa', obrigB: 'Ex: Responder pela área comercial e de relacionamento com clientes' },
+    termo_invest:  { desc: 'Ex: Desenvolvimento e lançamento de plataforma de e-commerce para o segmento de moda, com previsão de 1.000 clientes em 6 meses', obrigA: 'Ex: Aportar os recursos em 2 parcelas e acompanhar mensalmente os relatórios de desempenho', obrigB: 'Ex: Apresentar relatório mensal de uso dos recursos, metas atingidas e projeções para o período seguinte' },
+    vistoria:     { desc: 'Ex: Imóvel residencial - Casa 3 quartos, Rua das Flores 123, Jardim América - Cidade/UF | Incluir: estado de paredes, pisos, janelas, instalações elétricas e hidráulicas', obrigA: '', obrigB: '' },
+    notif_desocupacao: { desc: 'Ex: Imóvel situado na Rua das Palmeiras 45, Jardim América - Cidade/UF, CEP 00000-000', obrigA: 'Ex: Aguardar a desocupação no prazo e realizar vistoria final na entrega das chaves', obrigB: '' },
+    acordo_inadimpl: { desc: 'Ex: Aluguéis em atraso dos meses de setembro e outubro de 2026 do imóvel na Rua das Flores 123', obrigA: '', obrigB: '' },
+    notif_extra:  { desc: 'Ex: Cobrança de valores em atraso no montante de R$ X referentes a serviços prestados e não pagos', obrigA: 'Ex: Aguardar a regularização da situação no prazo estipulado e dar quitação após o cumprimento', obrigB: 'Ex: Regularizar a situação descrita nesta notificação no prazo estabelecido e comunicar o cumprimento' },
+    acordo_amigavel: { desc: 'Ex: Resolução amigável de divergência sobre o contrato de prestação de serviços firmado em janeiro de 2026', obrigA: 'Ex: Aceitar as condições acordadas e dar quitação após o cumprimento integral', obrigB: 'Ex: Cumprir as obrigações acordadas no prazo estabelecido e comunicar eventuais dificuldades' },
+    lgpd_termo:   { desc: 'Ex: Tratamento de dados pessoais (nome, e-mail, CPF e telefone) para fins de cadastro e prestação de serviços', obrigA: '', obrigB: '' },
+    politica_priv: { desc: 'Ex: Política de privacidade do site/aplicativo XYZ, incluindo dados coletados, finalidade e direitos dos usuários', obrigA: '', obrigB: '' },
+    termo_uso:    { desc: 'Ex: Termos de uso da plataforma XYZ para acesso e utilização dos serviços de gestão financeira', obrigA: '', obrigB: '' },
+    abertura_empresa: { desc: 'Ex: Nome da empresa: XYZ Serviços Ltda | Atividade: consultoria em tecnologia da informação | Capital: R$ 10.000,00', obrigA: '', obrigB: '' },
+    curriculo:    { desc: 'N/A — Currículo não usa este campo', obrigA: '', obrigB: '' },
+    carta_apres:  { desc: 'Ex: Assunto da carta de apresentação ou vaga/oportunidade de interesse', obrigA: 'Ex: Principais competências e experiências relevantes para a vaga', obrigB: 'Ex: Empresa ou pessoa para quem está se apresentando' },
+    carta_demissao: { desc: 'Ex: Pedido de demissão do cargo de Analista de Marketing', obrigA: '', obrigB: '' },
+    decl_experiencia: { desc: 'Ex: Cargo/função exercida: Gerente de Vendas | Período: janeiro de 2022 a outubro de 2026', obrigA: 'Ex: Principais atividades realizadas: gestão de equipe, prospecção de clientes, elaboração de relatórios', obrigB: '' },
+  };
+
+  const hint = hints[id];
+  if (!hint) return;
+
+  const descEl = document.getElementById('obj_desc');
+  const obrigAEl = document.getElementById('obj_obrig_a');
+  const obrigBEl = document.getElementById('obj_obrig_b');
+
+  if (descEl)   descEl.placeholder   = hint.desc   || 'Descreva detalhadamente o objeto deste documento...';
+  if (obrigAEl) obrigAEl.placeholder = hint.obrigA || 'O que a Parte A deve fazer ou fornecer...';
+  if (obrigBEl) obrigBEl.placeholder = hint.obrigB || 'O que a Parte B deve executar ou entregar...';
 }
 
 function buildClauseCards() {
@@ -502,6 +575,15 @@ function wizardNext() {
   if (currentStep === 1 && !selectedType) { showNotif('Selecione um tipo de documento', '⚠️'); return; }
   if (currentStep === 2 && (!V('p_a_nome') || !V('p_b_nome'))) { showNotif('Preencha os nomes das partes', '⚠️'); return; }
   if (currentStep === 3 && !V('obj_desc')) { showNotif('Descreva o objeto do contrato', '⚠️'); return; }
+  // Auto-preenche Foro com cidade do local de execução (se vazio)
+  if (currentStep === 3) {
+    const localExec = V('obj_local');
+    const foroEl = document.getElementById('jur_foro');
+    if (localExec && foroEl && !foroEl.value) foroEl.value = 'Comarca de ' + localExec;
+    // Auto-preenche Local da assinatura também
+    const jurLocalEl = document.getElementById('jur_local');
+    if (localExec && jurLocalEl && !jurLocalEl.value) jurLocalEl.value = localExec;
+  }
 
   if (currentStep === 1 && selectedType.startsWith('gen_')) { openIAModal(); return; }
   if (currentStep === TOTAL_STEPS) { generateDocument(); return; }
@@ -697,9 +779,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     return line + '.';
   };
 
-  const aviso = `<div style="margin-top:32px;padding:12px 16px;border:1px dashed #ccc;border-radius:4px;font-size:8.5pt;color:#777;text-align:center;line-height:1.5;">
-    ⚠️ Este documento é um modelo de referência gerado pelo DocFácil. Não constitui assessoria ou consultoria jurídica. Para situações específicas, consulte um advogado inscrito na OAB.
-  </div>`;
+  const aviso = `<div class="doc-aviso-oab">AVISO: Este modelo de referência não constitui assessoria jurídica. Para situações específicas, consulte um advogado inscrito na OAB.</div>`;
 
   const cabecalho = `
   <div class="doc-masthead">
@@ -1116,7 +1196,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>2.3. As decisões estratégicas serão tomadas em conjunto, mediante acordo entre as partes.</p>
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula III — Da Remuneração e Divisão de Resultados</div><div class="clausula-body">
-      <p>3.1. Os resultados financeiros da parceria serão divididos na proporção de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), conforme <strong>${val.forma}</strong>.</p>
+      <p>3.1. Os resultados financeiros e a remuneração da parceria correspondem a <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), pagos <strong>${val.forma}</strong>, com vencimento em <strong>${val.venc || 'data acordada entre as partes'}</strong>.</p>
       <p>3.2. Os pagamentos serão realizados mediante: <strong>${val.banco || 'a definir entre as partes'}</strong>, com vencimento <strong>${val.venc || 'conforme apuração dos resultados'}</strong>.</p>
       ${val.cond ? `<p>3.3. Condições especiais: ${val.cond}</p>` : ''}
     </div></div>
@@ -2006,7 +2086,25 @@ function downloadPDF() {
 
   const tmp = document.createElement('div');
   tmp.innerHTML = d.html;
-  const text = tmp.innerText;
+
+  // Remove o masthead (evita título duplicado no PDF)
+  tmp.querySelectorAll('.doc-masthead').forEach(el => el.remove());
+
+  // Remove o aviso OAB (será adicionado como rodapé)
+  tmp.querySelectorAll('.doc-aviso-oab').forEach(el => el.remove());
+
+  // Extrai texto e limpa
+  const rawText = tmp.innerText;
+  const text = rawText.split('\n')
+    .filter(line => {
+      const t = line.trim();
+      return t !== 'null'
+        && t !== 'nullCPF: null'
+        && !t.includes('nullCPF')
+        && t !== ''
+        || t === ''; // mantém linhas vazias para espaçamento
+    })
+    .join('\n');
 
   const W = 170; // largura útil
   let y    = 20;
@@ -2067,17 +2165,26 @@ function downloadPDF() {
     y += 5.2;
   }
 
-  // Página final
-  addPdfFooter(pdf, d.id);
-
-  // Número em todas as páginas
+  // Numeração e aviso em todas as páginas
   const totalPages = pdf.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i);
+    // Linha separadora
+    pdf.setFillColor(200, 200, 200);
+    pdf.rect(15, 283, 180, 0.3, 'F');
+    // Aviso OAB (última página)
+    if (i === totalPages) {
+      pdf.setFont('times', 'italic');
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(150);
+      pdf.text('Modelo de referência gerado pelo DocFácil. Nao constitui assessoria juridica. Consulte um advogado para casos especificos.', 105, 286, { align:'center', maxWidth:170 });
+    }
+    // Número de página
     pdf.setFont('times', 'italic');
     pdf.setFontSize(7.5);
     pdf.setTextColor(140);
-    pdf.text(`Página ${i} de ${totalPages}`, 105, 290, { align:'center' });
+    pdf.text(`Pagina ${i} de ${totalPages}`, 105, 291, { align:'center' });
+    pdf.setTextColor(0);
   }
 
   pdf.save(`${d.typeInfo?.name || 'Documento'} — ${d.id}.pdf`);
@@ -2085,8 +2192,7 @@ function downloadPDF() {
 }
 
 function addPdfFooter(pdf, num) {
-  pdf.setFillColor(26, 26, 26);
-  pdf.rect(15, 282, 180, 0.3, 'F');
+  // placeholder — footer agora tratado no loop acima
 }
 
 // ════════════════════════════════════════════════════════════════
