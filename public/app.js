@@ -458,10 +458,9 @@ function selectType(id) {
   document.getElementById('tc-' + id)?.classList.add('selected');
   document.getElementById('role-a-label').textContent = getRoleA(id);
   document.getElementById('role-b-label').textContent = getRoleB(id);
-  // Atualiza placeholders do step 3 conforme o tipo
+  // Aplica configuração completa do wizard por tipo
+  applyWizardConfig(id);
   updateStep3Hints(id);
-  // Atualiza título do step 2 conforme o tipo
-  updateStep2Title(id);
 }
 
 function updateStep2Title(id) {
@@ -574,14 +573,13 @@ function resetWizard() {
 function wizardNext() {
   if (currentStep === 1 && !selectedType) { showNotif('Selecione um tipo de documento', '⚠️'); return; }
   if (currentStep === 2 && (!V('p_a_nome') || !V('p_b_nome'))) { showNotif('Preencha os nomes das partes', '⚠️'); return; }
-  if (currentStep === 3 && !V('obj_desc')) { showNotif('Descreva o objeto do contrato', '⚠️'); return; }
-  // Auto-preenche Foro com cidade do local de execução (se vazio)
+  if (currentStep === 3 && !V('obj_desc')) { showNotif('Descreva o objeto do documento', '⚠️'); return; }
+  // Auto-preenche Foro e Local com cidade informada no step 3
   if (currentStep === 3) {
     const localExec = V('obj_local');
-    const foroEl = document.getElementById('jur_foro');
-    if (localExec && foroEl && !foroEl.value) foroEl.value = 'Comarca de ' + localExec;
-    // Auto-preenche Local da assinatura também
+    const foroEl    = document.getElementById('jur_foro');
     const jurLocalEl = document.getElementById('jur_local');
+    if (localExec && foroEl && !foroEl.value)     foroEl.value    = localExec;
     if (localExec && jurLocalEl && !jurLocalEl.value) jurLocalEl.value = localExec;
   }
 
@@ -638,6 +636,386 @@ function quickCreate(typeId) {
 // ════════════════════════════════════════════════════════════════
 
 function V(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+
+// ════════════════════════════════════════════════════════════════
+//  WIZARD ADAPTATIVO — labels e campos por tipo de documento
+// ════════════════════════════════════════════════════════════════
+
+const WIZARD_CONFIG = {
+  // ── Contratos ──
+  servico: {
+    step2: { title:'Quem contrata e quem executa?', sub:'Informe os dados do contratante e do prestador de serviços' },
+    step3: { title:'Qual serviço será prestado?', sub:'Descreva o serviço, prazo e local de execução' },
+    step4: { title:'Valor e forma de pagamento', sub:'Defina os valores e condições financeiras do contrato' },
+    step6: { title:'Informações finais do contrato', sub:'Foro, rescisão e demais disposições legais' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  trabalho_pj: {
+    step2: { title:'Empresa contratante e profissional PJ', sub:'Informe os dados da empresa e do profissional contratado' },
+    step3: { title:'Qual serviço o PJ irá prestar?', sub:'Descreva as atividades, carga horária e local' },
+    step4: { title:'Honorários e forma de pagamento', sub:'Defina o valor mensal ou por projeto e dados bancários' },
+    step6: { title:'Cláusulas finais do contrato PJ', sub:'Foro, rescisão e ausência de vínculo empregatício' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  freelancer: {
+    step2: { title:'Contratante e Freelancer', sub:'Dados de quem contrata e quem executa o projeto' },
+    step3: { title:'Qual projeto será desenvolvido?', sub:'Descreva o projeto, entregas e cronograma' },
+    step4: { title:'Valor do projeto e pagamento', sub:'Honorários, etapas de pagamento e dados bancários' },
+    step6: { title:'Cláusulas finais', sub:'Foro competente e condições de rescisão' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  aluguel_res: {
+    step2: { title:'Locador (proprietário) e Locatário', sub:'Informe os dados do proprietário e do inquilino' },
+    step3: { title:'Imóvel e prazo da locação', sub:'Descreva o imóvel completo com endereço e características' },
+    step3labels: { desc:'Descrição completa do imóvel *', local:'Cidade onde o imóvel está localizado' },
+    step4: { title:'Valor do aluguel e encargos', sub:'Defina o valor do aluguel, vencimento e dados para pagamento' },
+    step4labels: { forma:'Frequência do aluguel', venc:'Dia de vencimento (ex: dia 10)', banco:'Dados para pagamento (Pix, conta bancária)' },
+    step6: { title:'Dados finais do contrato', sub:'Foro da comarca onde o imóvel está localizado' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  aluguel_com: {
+    step2: { title:'Locador (proprietário) e Locatário', sub:'Informe os dados do proprietário e do locatário comercial' },
+    step3: { title:'Imóvel comercial e prazo', sub:'Descreva o imóvel comercial completo com endereço' },
+    step4: { title:'Valor do aluguel comercial', sub:'Aluguel, encargos, vencimento e dados de pagamento' },
+    step6: { title:'Dados finais do contrato', sub:'Foro da comarca onde o imóvel está localizado' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  locacao_simples: {
+    step2: { title:'Locador (proprietário) e Locatário', sub:'Dados do dono do imóvel e de quem vai alugar' },
+    step3: { title:'Imóvel e período da locação', sub:'Informe o endereço completo e o período do aluguel' },
+    step4: { title:'Valor e condições do aluguel', sub:'Valor mensal, vencimento e como será pago' },
+    step6: { title:'Dados finais', sub:'Foro e condições de rescisão do contrato' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  locacao_fiador: {
+    step2: { title:'Locador, Locatário e Fiador', sub:'Dados do proprietário, inquilino e do fiador garante' },
+    step3: { title:'Imóvel e período da locação', sub:'Endereço completo do imóvel e período acordado' },
+    step4: { title:'Valor e condições do aluguel', sub:'Aluguel mensal, vencimento e dados de pagamento' },
+    step6: { title:'Dados finais com fiança', sub:'Foro, rescisão e condições da garantia' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  compravenda: {
+    step2: { title:'Vendedor e Comprador', sub:'Dados de quem vende e de quem compra o bem' },
+    step3: { title:'O que está sendo vendido?', sub:'Descreva o bem: veículo, imóvel, equipamento etc.' },
+    step4: { title:'Preço e forma de pagamento', sub:'Valor total, parcelas e dados para pagamento' },
+    step6: { title:'Garantias e disposições finais', sub:'Foro, evicção e vícios ocultos' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  parceria: {
+    step2: { title:'Parceiro A e Parceiro B', sub:'Dados de ambos os parceiros comerciais' },
+    step3: { title:'Objeto da parceria', sub:'Descreva o negócio, as metas e a divisão de responsabilidades' },
+    step4: { title:'Remuneração e resultados', sub:'Como os resultados serão divididos ou pagos' },
+    step6: { title:'Dados finais da parceria', sub:'Foro, prazo e condições de encerramento' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  plano_parceria: {
+    step2: { title:'Parceiro A e Parceiro B', sub:'Dados de ambos os parceiros do plano comercial' },
+    step3: { title:'O que a parceria vai fazer?', sub:'Descreva o plano, metas e divisão de tarefas' },
+    step4: { title:'Investimento e retorno', sub:'Valores envolvidos e forma de divisão dos resultados' },
+    step6: { title:'Dados finais', sub:'Foro e condições de encerramento da parceria' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  influenciador: {
+    step2: { title:'Marca/Empresa e Influenciador Digital', sub:'Dados da marca contratante e do influenciador' },
+    step3: { title:'Conteúdo a ser criado', sub:'Descreva o tipo de conteúdo, plataformas e entregáveis' },
+    step4: { title:'Cachê e pagamento', sub:'Valor do cachê, forma e data de pagamento' },
+    step6: { title:'Dados finais do contrato', sub:'Direitos autorais, foro e rescisão' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  nda: {
+    step2: { title:'Parte Divulgante e Parte Receptora', sub:'Quem compartilha e quem recebe as informações confidenciais' },
+    step3: { title:'Quais informações serão protegidas?', sub:'Descreva as informações confidenciais e o contexto do acordo' },
+    step4: { title:'Penalidade por violação', sub:'Valor da multa em caso de quebra de sigilo' },
+    step6: { title:'Vigência e foro do NDA', sub:'Prazo de confidencialidade e foro competente' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  comissao: {
+    step2: { title:'Comitente (empresa) e Comissionado', sub:'Dados da empresa contratante e do representante comercial' },
+    step3: { title:'O que será vendido?', sub:'Produtos/serviços a representar e região de atuação' },
+    step4: { title:'Comissão e pagamento', sub:'Percentual ou valor fixo de comissão e prazo de pagamento' },
+    step6: { title:'Dados finais do contrato', sub:'Lei 4.886/65, foro e condições de rescisão' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  autonomo: {
+    step2: { title:'Contratante e Profissional Autônomo', sub:'Dados de quem contrata e do profissional autônomo' },
+    step3: { title:'Qual serviço autônomo será prestado?', sub:'Descreva o serviço, local e prazo de execução' },
+    step4: { title:'Valor e pagamento', sub:'Remuneração pelo serviço e forma de pagamento' },
+    step6: { title:'Dados finais', sub:'Foro e ausência de vínculo empregatício' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  estagio: {
+    step2: { title:'Empresa concedente e Estagiário', sub:'Dados da empresa e do estudante estagiário' },
+    step3: { title:'Atividades e carga horária do estágio', sub:'Descreva as atividades e o horário de trabalho' },
+    step4: { title:'Bolsa-auxílio e benefícios', sub:'Valor da bolsa e auxílio-transporte' },
+    step6: { title:'Dados finais do termo', sub:'Lei 11.788/2008, foro e condições do estágio' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  // ── Imobiliário ──
+  recibo_aluguel: {
+    step2: { title:'Locador (recebedor) e Locatário (pagante)', sub:'Dados de quem recebe e de quem pagou o aluguel' },
+    step3: { title:'Referência do aluguel', sub:'Período de referência e imóvel relacionado ao recibo' },
+    step4: { title:'Valor recebido', sub:'Valor do aluguel e encargos pagos nesta competência' },
+    step6: { title:'Dados do recibo', sub:'Local de emissão e informações adicionais' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  vistoria: {
+    step2: { title:'Proprietário e Locatário/Ocupante', sub:'Dados de quem entrega e quem recebe o imóvel' },
+    step3: { title:'Imóvel a ser vistoriado', sub:'Endereço completo e características do imóvel' },
+    step4: { title:'Não aplicável', sub:'A vistoria não tem valores financeiros' },
+    step6: { title:'Dados finais da vistoria', sub:'Data, local e observações finais' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: false,
+  },
+  notif_desocupacao: {
+    step2: { title:'Notificante (proprietário) e Notificado (inquilino)', sub:'Dados de quem notifica e quem deve desocupar' },
+    step3: { title:'Imóvel a ser desocupado', sub:'Endereço do imóvel e motivo da notificação' },
+    step4: { title:'Não aplicável', sub:'Notificações não têm valores financeiros' },
+    step6: { title:'Dados da notificação', sub:'Prazo para desocupação e foro competente' },
+    mostrarValor: false, mostrarPrazo: false, mostrarObrig: false,
+  },
+  acordo_inadimpl: {
+    step2: { title:'Locador (credor) e Locatário (devedor)', sub:'Dados do proprietário e do locatário inadimplente' },
+    step3: { title:'Débito em aberto', sub:'Descreva os meses em atraso e o total devedor' },
+    step4: { title:'Valor do débito e acordo de pagamento', sub:'Total da dívida, parcelas e dados para pagamento' },
+    step6: { title:'Dados finais do acordo', sub:'Consequências do descumprimento e foro' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  // ── Financeiro ──
+  recibo: {
+    step2: { title:'Quem recebe e quem pagou', sub:'Dados do recebedor e do pagante' },
+    step3: { title:'Pelo que está sendo pago?', sub:'Descreva o serviço, produto ou motivo do pagamento' },
+    step4: { title:'Valor recebido', sub:'Valor pago, forma e data do pagamento' },
+    step6: { title:'Local de emissão', sub:'Cidade e data do recibo' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: false,
+  },
+  quitacao: {
+    step2: { title:'Credor e Devedor', sub:'Dados de quem deu a quitação e de quem pagou' },
+    step3: { title:'O que está sendo quitado?', sub:'Descreva a dívida ou obrigação que está sendo quitada' },
+    step4: { title:'Valor quitado', sub:'Valor total pago e forma de pagamento' },
+    step6: { title:'Dados do termo', sub:'Local e data da quitação' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: false,
+  },
+  confissao_divida: {
+    step2: { title:'Credor e Devedor', sub:'Dados de quem é credor e de quem confessa a dívida' },
+    step3: { title:'Qual é a dívida?', sub:'Descreva a origem e natureza do débito confessado' },
+    step4: { title:'Valor da dívida e pagamento', sub:'Total devido, juros e forma de quitação' },
+    step6: { title:'Dados finais', sub:'Foro e condições de cobrança em caso de inadimplência' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  parcelamento: {
+    step2: { title:'Credor e Devedor', sub:'Dados de quem é credor e de quem vai parcelar' },
+    step3: { title:'Qual dívida está sendo parcelada?', sub:'Descreva a origem do débito e o total a parcelar' },
+    step4: { title:'Valor e condições do parcelamento', sub:'Total, número de parcelas e vencimentos' },
+    step6: { title:'Dados finais do parcelamento', sub:'Foro e consequências do não pagamento' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: false,
+  },
+  nota_servico: {
+    step2: { title:'Prestador e Tomador do serviço', sub:'Dados de quem prestou e quem recebeu o serviço' },
+    step3: { title:'Serviço prestado', sub:'Descreva o serviço executado e a data de realização' },
+    step4: { title:'Valor do serviço', sub:'Valor cobrado e forma de pagamento' },
+    step6: { title:'Local de emissão', sub:'Cidade e data da nota' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: false,
+  },
+  // ── Trabalho ──
+  curriculo: {
+    step2: { title:'Dados pessoais do candidato', sub:'Suas informações de contato e identificação' },
+    step3: { title:'Objetivo e experiência', sub:'Área de atuação, experiências e formação acadêmica' },
+    step4: { title:'Não aplicável', sub:'Currículo não tem valores financeiros' },
+    step6: { title:'Não aplicável', sub:'Currículo não tem dados jurídicos' },
+    mostrarValor: false, mostrarPrazo: false, mostrarObrig: true,
+  },
+  carta_apres: {
+    step2: { title:'Remetente e Destinatário', sub:'Seus dados e da empresa/pessoa para quem está se apresentando' },
+    step3: { title:'Assunto e conteúdo da carta', sub:'Vaga ou oportunidade e principais pontos da apresentação' },
+    step4: { title:'Não aplicável', sub:'Carta de apresentação não tem valores' },
+    step6: { title:'Não aplicável', sub:'Carta não tem dados jurídicos' },
+    mostrarValor: false, mostrarPrazo: false, mostrarObrig: true,
+  },
+  carta_demissao: {
+    step2: { title:'Dados do funcionário', sub:'Seus dados e do RH ou chefia para quem está pedindo demissão' },
+    step3: { title:'Motivo e data de saída', sub:'Cargo que ocupa e razão da demissão' },
+    step4: { title:'Não aplicável', sub:'Carta de demissão não tem valores financeiros' },
+    step6: { title:'Aviso prévio e data de saída', sub:'Prazo do aviso prévio e data efetiva de desligamento' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: false,
+  },
+  decl_experiencia: {
+    step2: { title:'Empresa declarante e Profissional', sub:'Dados da empresa que declara e do profissional' },
+    step3: { title:'Cargo e atividades exercidas', sub:'Função, período trabalhado e principais atividades' },
+    step4: { title:'Não aplicável', sub:'Declaração de experiência não tem valores financeiros' },
+    step6: { title:'Dados da declaração', sub:'Local de emissão e informações adicionais' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: true,
+  },
+  // ── Declarações ──
+  decl_residencia: {
+    step2: { title:'Dados do declarante', sub:'Seus dados pessoais para a declaração de residência' },
+    step3: { title:'Endereço de residência', sub:'Informe o endereço completo que está declarando' },
+    step4: { title:'Não aplicável', sub:'Declaração não tem valores financeiros' },
+    step6: { title:'Local e data da declaração', sub:'Onde e quando está sendo emitida a declaração' },
+    mostrarValor: false, mostrarPrazo: false, mostrarObrig: false,
+  },
+  decl_renda: {
+    step2: { title:'Dados do declarante', sub:'Seus dados pessoais para a declaração de renda' },
+    step3: { title:'Fonte de renda', sub:'Descreva de onde vem sua renda (emprego, negócio, etc.)' },
+    step4: { title:'Valor da renda mensal', sub:'Informe o valor aproximado da sua renda mensal' },
+    step6: { title:'Local e data', sub:'Onde e quando está sendo emitida a declaração' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: false,
+  },
+  decl_informal: {
+    step2: { title:'Dados do declarante', sub:'Seus dados pessoais para a declaração de trabalho informal' },
+    step3: { title:'Atividade informal', sub:'Descreva o tipo de trabalho informal que exerce' },
+    step4: { title:'Renda aproximada', sub:'Informe a renda mensal aproximada da atividade' },
+    step6: { title:'Local e data', sub:'Onde e quando está sendo emitida a declaração' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: false,
+  },
+  decl_comparec: {
+    step2: { title:'Declarante (empresa/órgão) e quem compareceu', sub:'Dados de quem emite e de quem compareceu' },
+    step3: { title:'Motivo e data do comparecimento', sub:'Quando e para que a pessoa compareceu' },
+    step4: { title:'Não aplicável', sub:'Declaração não tem valores financeiros' },
+    step6: { title:'Local e data da declaração', sub:'Onde e quando está sendo emitida' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: false,
+  },
+  decl_respons: {
+    step2: { title:'Dados do declarante', sub:'Seus dados pessoais para a declaração de responsabilidade' },
+    step3: { title:'Pelo que está se responsabilizando?', sub:'Descreva claramente o que está declarando assumir' },
+    step4: { title:'Não aplicável', sub:'Declaração não tem valores financeiros' },
+    step6: { title:'Local e data', sub:'Onde e quando está sendo emitida a declaração' },
+    mostrarValor: false, mostrarPrazo: false, mostrarObrig: false,
+  },
+  decl_uniao: {
+    step2: { title:'Companheiro(a) 1 e Companheiro(a) 2', sub:'Dados de ambos os conviventes da união estável' },
+    step3: { title:'Dados da união', sub:'Data de início da convivência e endereço comum' },
+    step4: { title:'Não aplicável', sub:'Declaração não tem valores financeiros' },
+    step6: { title:'Local e data', sub:'Onde e quando está sendo emitida a declaração' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: false,
+  },
+  // ── Jurídico ──
+  lgpd_termo: {
+    step2: { title:'Controlador dos dados e Titular', sub:'Empresa que trata os dados e a pessoa titular' },
+    step3: { title:'Quais dados serão tratados?', sub:'Descreva os dados coletados e a finalidade do tratamento' },
+    step4: { title:'Não aplicável', sub:'Termo LGPD não tem valores financeiros' },
+    step6: { title:'Vigência do consentimento', sub:'Prazo e condições de revogação do consentimento' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: false,
+  },
+  politica_priv: {
+    step2: { title:'Responsável pela política', sub:'Dados da empresa responsável pelo tratamento de dados' },
+    step3: { title:'Dados coletados e finalidade', sub:'Descreva que dados são coletados e por quê' },
+    step4: { title:'Não aplicável', sub:'Política de privacidade não tem valores financeiros' },
+    step6: { title:'Vigência da política', sub:'Data de vigência e canal de contato para o DPO' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: false,
+  },
+  termo_uso: {
+    step2: { title:'Responsável pela plataforma', sub:'Dados da empresa ou pessoa responsável pela plataforma' },
+    step3: { title:'Regras de uso', sub:'Descreva as regras e condições de uso da plataforma' },
+    step4: { title:'Não aplicável', sub:'Termos de uso não têm valores financeiros' },
+    step6: { title:'Vigência dos termos', sub:'Data de vigência e como o usuário será notificado de alterações' },
+    mostrarValor: false, mostrarPrazo: true, mostrarObrig: false,
+  },
+  notif_extra: {
+    step2: { title:'Notificante e Notificado', sub:'Quem notifica e quem receberá a notificação' },
+    step3: { title:'Motivo da notificação', sub:'Descreva claramente o que está sendo notificado e o que se exige' },
+    step4: { title:'Valor em disputa (se houver)', sub:'Informe o valor envolvido na notificação, se aplicável' },
+    step6: { title:'Prazo e foro', sub:'Prazo para cumprimento e foro para ações judiciais' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: false,
+  },
+  acordo_amigavel: {
+    step2: { title:'Parte A e Parte B', sub:'Dados das partes que chegaram ao acordo' },
+    step3: { title:'O que está sendo acordado?', sub:'Descreva a situação e os termos do acordo amigável' },
+    step4: { title:'Valor do acordo', sub:'Quantia envolvida no acordo e forma de pagamento' },
+    step6: { title:'Dados finais do acordo', sub:'Foro e consequências do descumprimento' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  // ── Empresarial ──
+  abertura_empresa: {
+    step2: { title:'Sócio(s) fundador(es)', sub:'Dados dos sócios que vão abrir a empresa' },
+    step3: { title:'Dados da empresa a abrir', sub:'Nome, atividade, sede e capital social da empresa' },
+    step4: { title:'Capital social', sub:'Valor do capital social e distribuição entre os sócios' },
+    step6: { title:'Dados finais', sub:'Local de registro e informações adicionais' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: false,
+  },
+  contrato_social: {
+    step2: { title:'Sócios da empresa', sub:'Dados dos sócios que vão constituir a sociedade' },
+    step3: { title:'Dados da empresa', sub:'Nome, objeto social, sede e estrutura da empresa' },
+    step4: { title:'Capital social e quotas', sub:'Valor total do capital e divisão entre os sócios' },
+    step6: { title:'Administração e foro', sub:'Quem administra a empresa e onde serão resolvidas disputas' },
+    mostrarValor: true, mostrarPrazo: false, mostrarObrig: true,
+  },
+  acordo_socios: {
+    step2: { title:'Sócio A e Sócio B', sub:'Dados dos sócios que estão firmando o acordo' },
+    step3: { title:'Objeto do acordo societário', sub:'O que está sendo regulamentado entre os sócios' },
+    step4: { title:'Valores e quotas', sub:'Capital envolvido e participação de cada sócio' },
+    step6: { title:'Dados finais do acordo', sub:'Foro e condições de saída dos sócios' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+  termo_invest: {
+    step2: { title:'Investidor e Empresa Investida', sub:'Dados de quem aporta o capital e da empresa que recebe' },
+    step3: { title:'Projeto a ser financiado', sub:'Descreva o negócio, produto ou projeto que receberá investimento' },
+    step4: { title:'Valor do aporte e retorno', sub:'Valor investido, forma de retorno e prazo' },
+    step6: { title:'Dados finais do investimento', sub:'Foro e condições de saída do investidor' },
+    mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+  },
+};
+
+// Configuração padrão para tipos não mapeados
+const WIZARD_DEFAULT = {
+  step2: { title:'Dados das Partes', sub:'Informe os dados de ambas as partes' },
+  step3: { title:'Objeto e Prazo', sub:'Descreva detalhadamente o objeto deste documento' },
+  step4: { title:'Valores e Pagamento', sub:'Defina as condições financeiras' },
+  step6: { title:'Dados Finais', sub:'Informações legais e foro competente' },
+  mostrarValor: true, mostrarPrazo: true, mostrarObrig: true,
+};
+
+function applyWizardConfig(typeId) {
+  const cfg = WIZARD_CONFIG[typeId] || WIZARD_DEFAULT;
+
+  // Step 2
+  const s2title = document.querySelector('#step-2 .wizard-title');
+  const s2sub   = document.querySelector('#step-2 .wizard-subtitle');
+  if (s2title) s2title.textContent = cfg.step2.title;
+  if (s2sub)   s2sub.textContent   = cfg.step2.sub;
+
+  // Step 3
+  const s3title = document.querySelector('#step-3 .wizard-title');
+  const s3sub   = document.querySelector('#step-3 .wizard-subtitle');
+  if (s3title) s3title.textContent = cfg.step3.title;
+  if (s3sub)   s3sub.textContent   = cfg.step3.sub;
+
+  // Step 3 labels personalizados
+  if (cfg.step3labels) {
+    const descLabel = document.querySelector('label[for="obj_desc"], #step-3 label:first-of-type');
+    const localLabel = document.querySelector('label[for="obj_local"]');
+    // Usa querySelector por conteúdo não é confiável, então busca por textarea
+    const descArea = document.getElementById('obj_desc');
+    if (descArea && cfg.step3labels.desc) {
+      const lbl = descArea.previousElementSibling;
+      if (lbl && lbl.tagName === 'LABEL') lbl.textContent = cfg.step3labels.desc;
+    }
+  }
+
+  // Step 4
+  const s4title = document.querySelector('#step-4 .wizard-title');
+  const s4sub   = document.querySelector('#step-4 .wizard-subtitle');
+  if (s4title) s4title.textContent = cfg.step4.title;
+  if (s4sub)   s4sub.textContent   = cfg.step4.sub;
+
+  // Step 4: oculta campos de valor quando não aplicável
+  const valContainer = document.querySelector('#step-4 .form-grid');
+  if (valContainer) {
+    valContainer.style.opacity = cfg.mostrarValor ? '1' : '0.4';
+  }
+
+  // Step 6
+  const s6title = document.querySelector('#step-6 .wizard-title');
+  const s6sub   = document.querySelector('#step-6 .wizard-subtitle');
+  if (s6title) s6title.textContent = cfg.step6.title;
+  if (s6sub)   s6sub.textContent   = cfg.step6.sub;
+
+  // Obrigações no step 3 — oculta se não relevante
+  const obrigSection = document.getElementById('obj_obrig_a')?.closest('.field')?.parentElement;
+  const obrigAField = document.getElementById('obj_obrig_a')?.closest('.field');
+  const obrigBField = document.getElementById('obj_obrig_b')?.closest('.field');
+  if (obrigAField) obrigAField.style.display = cfg.mostrarObrig ? '' : 'none';
+  if (obrigBField) obrigBField.style.display = cfg.mostrarObrig ? '' : 'none';
+}
 
 function getAllTypes() { return Object.values(DOC_TYPES).flat(); }
 
@@ -710,7 +1088,7 @@ function generateDocument() {
     cond:     V('val_cond')     || '',
   };
   const jur = {
-    foro:       V('jur_foro')       || 'da Comarca do domicílio das partes',
+    foro:       V('jur_foro')       || 'Comarca do domicílio das partes',
     rescisao:   V('jur_rescisao')   || '30 dias',
     multa_resc: V('jur_multa_resc') || '10% sobre o valor total do contrato',
     resolucao:  V('jur_resolucao')  || 'pelo Poder Judiciário',
@@ -722,9 +1100,11 @@ function generateDocument() {
   const roleA = getRoleA(selectedType);
   const roleB = getRoleB(selectedType);
   const docTitle = getDocTitle(selectedType);
-  const vigText  = obj.vigencia
+  const vigText = obj.vigencia && obj.vigencia !== ''
     ? `por prazo ${obj.vigencia === 'indeterminado' ? 'indeterminado' : 'determinado de ' + obj.vigencia}`
-    : `de ${obj.inicio} a ${obj.fim}`;
+    : obj.fim && obj.fim !== 'indeterminado'
+      ? `de ${obj.inicio} a ${obj.fim}`
+      : `a partir de ${obj.inicio}`;
 
   let clausN = 5;
   const extraClauses = selectedClauses.map(c => buildExtraClause(c, ++clausN, pa, pb)).join('');
@@ -818,8 +1198,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
 
     <div class="clausula"><div class="clausula-title">Cláusula III — Do Aluguel e Condições de Pagamento</div><div class="clausula-body">
       <p>3.1. O aluguel mensal é de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), a ser pago até o dia <strong>${val.venc}</strong> de cada mês.</p>
-      <p>3.2. O pagamento será efetuado mediante: <strong>${val.banco || 'dados bancários a serem fornecidos pelo LOCADOR'}</strong>.</p>
-      <p>3.3. O não pagamento no prazo estipulado acarretará multa moratória de <strong>${val.multa}</strong> sobre o valor do aluguel em atraso, acrescida de juros de <strong>${val.juros}</strong> ao mês, calculados pro rata die, além de correção monetária pelo ${val.reajuste || 'IGPM'}, nos termos do art. 17 da Lei do Inquilinato.</p>
+      <p>3.2. O pagamento será efetuado mediante: <strong>${val.banco || 'dados a serem informados pelo LOCADOR'}</strong>.</p>
+      <p>3.3. O não pagamento no prazo estipulado acarretará multa moratória de <strong>${val.multa}</strong> sobre o valor do aluguel em atraso, acrescida de juros de mora de <strong>${val.juros}</strong>, calculados pro rata die, além de correção monetária pelo índice <strong>${val.reajuste || 'IGPM/FGV'}</strong>, nos termos do art. 17 da Lei do Inquilinato.</p>
       ${val.reajuste ? `<p>3.4. O valor do aluguel será reajustado anualmente pelo índice <strong>${val.reajuste}</strong>, nos termos da legislação vigente.</p>` : '<p>3.4. O valor do aluguel será reajustado anualmente pelo IGPM/FGV, nos termos da legislação vigente.</p>'}
     </div></div>
 
@@ -844,11 +1224,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     ${extraClauses}
 
     <div class="clausula"><div class="clausula-title">Cláusula ${roman[t === 'locacao_fiador' ? 8 : 7]} — Das Disposições Gerais</div><div class="clausula-body">
-      <p>Este contrato é regido pela ${lei} e pelo Código Civil (Lei nº 10.406/2002). As partes elegem o foro da <strong>${jur.foro || 'Comarca do local do imóvel'}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+      <p>Este contrato é regido pela ${lei} e pelo Código Civil (Lei nº 10.406/2002). As partes elegem o foro <strong>${jur.foro || 'Comarca do local do imóvel'}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -881,7 +1261,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">RECEBEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PAGANTE</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -909,7 +1289,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div>
     <div class="clausula"><div class="clausula-body"><p>${declTextos[t]}</p>${jur.extra ? `<p>${jur.extra}</p>` : ''}</div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">DECLARANTE</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         ${t === 'decl_uniao' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DECLARANTE 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
@@ -939,7 +1319,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
         : `<p>1.1. O DEVEDOR reconhece o débito de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}) perante o CREDOR e compromete-se a pagá-lo de forma parcelada.</p>
            <p>1.2. O pagamento será realizado em parcelas de <strong>${val.forma}</strong>, com vencimento <strong>${val.venc}</strong>, mediante ${val.banco || 'forma a ser acordada'}.</p>`
       }
-      <p>${t === 'quitacao' ? '1.3.' : '1.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de <strong>${val.juros}</strong> ao mês, nos termos do art. 395 do Código Civil.</p>
+      <p>${t === 'quitacao' ? '1.3.' : '1.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de mora de <strong>${val.juros}</strong>, nos termos do art. 395 do Código Civil.</p>
     </div></div>
 
     ${extraClauses}
@@ -949,7 +1329,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CREDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DEVEDOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -991,11 +1371,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     ${extraClauses}
 
     <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Do Foro</div><div class="clausula-body">
-      <p>Fica eleito o foro de <strong>${jur.foro}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+      <p>Fica eleito o foro de <strong>${jur.foro || 'Comarca do domicílio das partes'}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE DIVULGANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE RECEPTORA</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1040,7 +1420,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>4.1. Pela prestação dos serviços, o CONTRATANTE pagará ao CONTRATADO o valor de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), de forma <strong>${val.forma}</strong>, com vencimento em <strong>${val.venc}</strong>.</p>
       <p>4.2. O pagamento será realizado mediante: <strong>${val.banco || 'dados bancários a serem informados pelo CONTRATADO'}</strong>.</p>
       ${val.reajuste ? `<p>4.3. O valor será reajustado pelo índice <strong>${val.reajuste}</strong>.</p>` : ''}
-      <p>${val.reajuste ? '4.4.' : '4.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de <strong>${val.juros}</strong> ao mês, nos termos do art. 395 do Código Civil.</p>
+      <p>${val.reajuste ? '4.4.' : '4.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de mora de <strong>${val.juros}</strong>, nos termos do art. 395 do Código Civil.</p>
       ${val.cond ? `<p>Condições especiais: ${val.cond}.</p>` : ''}
     </div></div>
 
@@ -1058,11 +1438,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     ${extraClauses}
 
     <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
-      <p>Este instrumento é regido pelo Código Civil (Lei nº 10.406/2002). Fica eleito o foro de <strong>${jur.foro}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+      <p>Este instrumento é regido pelo Código Civil (Lei nº 10.406/2002). Fica eleito o foro de <strong>${jur.foro || 'Comarca do domicílio das partes'}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">CONTRATADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1110,11 +1490,11 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     ${extraClauses}
 
     <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
-      <p>Fica eleito o foro de <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+      <p>Fica eleito o foro de <strong>${jur.foro || 'Comarca do domicílio das partes'}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
 
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">INFLUENCIADOR DIGITAL</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1147,7 +1527,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>2.1. O preço total da venda é de <strong>R$ ${val.total}</strong> (${valorExtenso(val.total)}), pago <strong>${val.forma}</strong>.</p>
       <p>2.2. O pagamento será efetuado mediante: <strong>${val.banco || 'dados a serem informados pelo VENDEDOR'}</strong>.</p>
       ${val.cond ? `<p>2.3. Condições especiais: ${val.cond}</p>` : ''}
-      <p>${val.cond ? '2.4.' : '2.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de <strong>${val.juros}</strong> ao mês.</p>
+      <p>${val.cond ? '2.4.' : '2.3.'} O atraso no pagamento acarretará multa de <strong>${val.multa}</strong> e juros de mora de <strong>${val.juros}</strong>.</p>
     </div></div>
     <div class="clausula"><div class="clausula-title">Cláusula III — Da Entrega e Transferência</div><div class="clausula-body">
       <p>3.1. O bem será entregue ao COMPRADOR em <strong>${obj.fim !== 'indeterminado' ? obj.fim : obj.inicio}</strong>, no local: <strong>${obj.local || 'a ser acordado entre as partes'}</strong>.</p>
@@ -1160,10 +1540,10 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
     ${extraClauses}
     <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
-      <p>Fica eleito o foro de <strong>${jur.foro}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
+      <p>Fica eleito o foro de <strong>${jur.foro || 'Comarca do domicílio das partes'}</strong> para dirimir quaisquer litígios.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">VENDEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMPRADOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1209,10 +1589,10 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     </div></div>
     ${extraClauses}
     <div class="clausula"><div class="clausula-title">Cláusula ${roman[finalClauseN]} — Das Disposições Gerais</div><div class="clausula-body">
-      <p>Este instrumento não gera vínculo societário entre as partes. Fica eleito o foro de <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
+      <p>Este instrumento não gera vínculo societário entre as partes. Fica eleito o foro de <strong>${jur.foro || 'Comarca do domicílio das partes'}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARCEIRO A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARCEIRO B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1256,7 +1636,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Regido pela Lei nº 4.886/1965 e Código Civil. Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">COMITENTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMISSIONADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1299,7 +1679,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>As partes declaram que as informações acima correspondem ao estado real do imóvel na data da vistoria, comprometendo-se o LOCATÁRIO a devolvê-lo nas mesmas condições ao final da locação, salvo desgaste natural pelo uso.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR / PROPRIETÁRIO</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO / OCUPANTE</div></div>
@@ -1324,7 +1704,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Esta notificação serve como prova formal do aviso prévio legalmente exigido.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1355,7 +1735,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>3.1. O LOCADOR concede ao LOCATÁRIO a quitação condicionada ao cumprimento integral deste acordo. O descumprimento de qualquer parcela tornará o acordo sem efeito, restaurando integralmente o débito original.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1441,7 +1821,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Esta declaração é fornecida a pedido do(a) interessado(a) para os fins que se fizerem necessários, sendo verdadeiras todas as informações aqui prestadas.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">Representante Legal</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"></div>
@@ -1476,7 +1856,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>O presente estágio não gera vínculo empregatício, nos termos do art. 3º da Lei nº 11.788/2008. Foro: <strong>${jur.foro}</strong>.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">EMPRESA CONCEDENTE</div><div class="sig-doc">CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">ESTAGIÁRIO(A)</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
@@ -1508,7 +1888,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Declaro ter prestado os serviços acima descritos e que as informações são verdadeiras.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PRESTADOR DE SERVIÇO</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">TOMADOR — Ciente</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1546,7 +1926,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>O titular declara ter lido e compreendido este termo, consentindo livremente com o tratamento de seus dados pessoais conforme descrito acima, nos termos do art. 8º da LGPD.</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome || 'TITULAR DOS DADOS'}</div><div class="sig-role">TITULAR</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTROLADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
@@ -1587,7 +1967,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       ${jur.extra ? `<p>${jur.extra}</p>` : ''}
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1621,7 +2001,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
@@ -1669,7 +2049,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Regido pelo Código Civil. Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO ADMINISTRADOR</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
@@ -1713,7 +2093,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO A</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO B</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
@@ -1750,7 +2130,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Foro: <strong>${jur.foro}</strong>.${jur.extra ? ' ' + jur.extra : ''}</p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">INVESTIDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">EMPRESA INVESTIDA</div><div class="sig-doc">CNPJ: ${pb.doc}</div></div>
@@ -1787,7 +2167,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p><em>⚠️ Este documento é um modelo de referência para organização das informações. Para constituição legal da empresa, registre o contrato social na Junta Comercial do seu estado ou utilize o Portal do Empreendedor (MEI/ME).</em></p>
     </div></div>
     <div class="signatures-block">
-      <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+      <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
         <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">REQUERENTE / SÓCIO</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
         ${pb.nome && pb.nome !== '—' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
@@ -1846,7 +2226,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
   </div></div>
 
   <div class="signatures-block">
-    <div class="signatures-title">${jur.local || 'Local/data da assinatura'}, ${dateStr}</div>
+    <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
     <div class="sig-grid">
       <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">${roleA}</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
       <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">${roleB}</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
