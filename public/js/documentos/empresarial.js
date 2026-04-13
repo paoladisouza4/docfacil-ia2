@@ -11,7 +11,7 @@ window.DocEmpresarial = function buildEmpresarial(t, params) {
 
   // ════ CONTRATO SOCIAL ════
   if (t === 'contrato_social') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Contrato Social de Sociedade Limitada · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Sócios</div>
@@ -59,7 +59,7 @@ window.DocEmpresarial = function buildEmpresarial(t, params) {
 
   // ════ ACORDO ENTRE SÓCIOS ════
   if (t === 'acordo_socios') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Acordo de Sócios · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Sócios</div>
@@ -99,7 +99,7 @@ window.DocEmpresarial = function buildEmpresarial(t, params) {
 
   // ════ TERMO DE INVESTIMENTO ════
   if (t === 'termo_invest') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de Investimento · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -140,7 +140,7 @@ window.DocEmpresarial = function buildEmpresarial(t, params) {
 
   // ════ ABERTURA DE EMPRESA ════
   if (t === 'abertura_empresa') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Requerimento de Constituição de Empresa · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Requerente</div>
@@ -172,9 +172,9 @@ window.DocEmpresarial = function buildEmpresarial(t, params) {
   }
 
   // ════ TEMPLATE GENÉRICO MELHORADO ════
-  return `${cabecalho}
+  return `${head}
   if (t === 'parceria' || t === 'plano_parceria') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de Parceria Comercial · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>

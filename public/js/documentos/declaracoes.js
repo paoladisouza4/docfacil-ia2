@@ -19,7 +19,7 @@ window.DocDeclaracoes = function buildDeclaracao(t, params) {
       decl_respons: `Declaro, para os devidos fins, que me responsabilizo por: <strong>${obj.desc}</strong>. Assumo toda responsabilidade civil decorrente desta declaração, isentando terceiros de quaisquer ônus.`,
       decl_uniao: `Declaramos, para os devidos fins legais, que vivemos em União Estável desde <strong>${obj.inicio}</strong>, de forma pública, contínua e duradoura, com o objetivo de constituir família, nos termos do art. 1.723 do Código Civil Brasileiro (Lei nº 10.406/2002). Declaramos ainda que não possuímos impedimentos legais para a união e que as informações prestadas são verdadeiras.`,
     };
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Declarante${t === 'decl_uniao' ? 's' : ''}</div>
@@ -39,7 +39,7 @@ window.DocDeclaracoes = function buildDeclaracao(t, params) {
 
   // ════ CONFISSÃO DE DÍVIDA / PARCELAMENTO / QUITAÇÃO ════
   if (['confissao_divida','parcelamento','quitacao'].includes(t)) {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -85,7 +85,7 @@ window.DocDeclaracoes = function buildDeclaracao(t, params) {
   // ════ NDA / CONFIDENCIALIDADE ════
   // ════ CARTA DE APRESENTAÇÃO ════
   if (t === 'carta_apres') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">${dateStr}</div>
     <div style="margin-bottom:24px;">
       <p><strong>${pa.nome}</strong>${pa.prof ? ' — ' + pa.prof : ''}</p>
@@ -116,7 +116,7 @@ window.DocDeclaracoes = function buildDeclaracao(t, params) {
 
   // ════ CARTA DE DEMISSÃO ════
   if (t === 'carta_demissao') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">${dateStr}</div>
     <div style="margin-bottom:24px;">
       <p>De: <strong>${pa.nome}</strong>${pa.prof ? ' — ' + pa.prof : ''}</p>
@@ -148,7 +148,7 @@ window.DocDeclaracoes = function buildDeclaracao(t, params) {
 
   // ════ DECLARAÇÃO DE EXPERIÊNCIA ════
   if (t === 'decl_experiencia') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Dados da Empresa Declarante</div>
@@ -171,7 +171,7 @@ window.DocDeclaracoes = function buildDeclaracao(t, params) {
 
   // ════ ESTÁGIO ════
   if (t === 'estagio') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Termo de Compromisso de Estágio · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>

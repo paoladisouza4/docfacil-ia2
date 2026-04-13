@@ -12,7 +12,7 @@ window.DocLocacao = function buildLocacao(t, params) {
   if (['aluguel_res','aluguel_com','locacao_simples','locacao_fiador'].includes(t)) {
     const tipoImovel = t === 'aluguel_com' ? 'comercial' : 'residencial';
     const lei = 'Lei nº 8.245/1991 (Lei do Inquilinato)';
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de Locação · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -83,7 +83,7 @@ window.DocLocacao = function buildLocacao(t, params) {
   // ════ RECIBO DE PAGAMENTO ════
   // ════ VISTORIA DO IMÓVEL ════
   if (t === 'vistoria') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Termo de Vistoria de Imóvel · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Identificação</div>
@@ -122,7 +122,7 @@ window.DocLocacao = function buildLocacao(t, params) {
 
   // ════ NOTIFICAÇÃO DE DESOCUPAÇÃO ════
   if (t === 'notif_desocupacao') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Notificação Extrajudicial de Desocupação · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Identificação</div>
@@ -147,7 +147,7 @@ window.DocLocacao = function buildLocacao(t, params) {
 
   // ════ ACORDO DE INADIMPLÊNCIA ════
   if (t === 'acordo_inadimpl') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Acordo de Regularização de Débito Locatício · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>

@@ -11,7 +11,7 @@ window.DocContratos = function buildContrato(t, params) {
 
   // ════ NDA / CONFIDENCIALIDADE ════
   if (t === 'nda') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Acordo de Não-Divulgação — Non-Disclosure Agreement · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -58,7 +58,7 @@ window.DocContratos = function buildContrato(t, params) {
   // ════ FREELANCER / PRESTAÇÃO DE SERVIÇOS / PJ / AUTÔNOMO ════
   if (['servico','freelancer','trabalho_pj','autonomo'].includes(t)) {
     const tipoContrato = t === 'freelancer' ? 'Freelancer' : t === 'trabalho_pj' ? 'Trabalho PJ' : t === 'autonomo' ? 'Autônomo' : 'Prestação de Serviços';
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de ${tipoContrato} · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -124,7 +124,7 @@ window.DocContratos = function buildContrato(t, params) {
 
   // ════ INFLUENCIADOR DIGITAL ════
   if (t === 'influenciador') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de Parceria Comercial com Influenciador Digital · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -176,7 +176,7 @@ window.DocContratos = function buildContrato(t, params) {
 
   // ════ COMPRA E VENDA ════
   if (t === 'compravenda') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de Compra e Venda · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -223,7 +223,7 @@ window.DocContratos = function buildContrato(t, params) {
 
   // ════ PARCERIA COMERCIAL ════
   if (t === 'parceria' || t === 'plano_parceria') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de Parceria Comercial · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -272,7 +272,7 @@ window.DocContratos = function buildContrato(t, params) {
 
   // ════ COMISSÃO / REPRESENTAÇÃO COMERCIAL ════
   if (t === 'comissao') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular de Representação Comercial e Comissão · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>

@@ -11,7 +11,7 @@ window.DocFinanceiro = function buildFinanceiro(t, params) {
 
   // ════ RECIBO DE PAGAMENTO ════
   if (['recibo','recibo_aluguel'].includes(t)) {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Documento comprobatório de pagamento · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Dados do Recibo</div>
@@ -46,7 +46,7 @@ window.DocFinanceiro = function buildFinanceiro(t, params) {
       decl_respons: `Declaro, para os devidos fins, que me responsabilizo por: <strong>${obj.desc}</strong>. Assumo toda responsabilidade civil decorrente desta declaração, isentando terceiros de quaisquer ônus.`,
       decl_uniao: `Declaramos, para os devidos fins legais, que vivemos em União Estável desde <strong>${obj.inicio}</strong>, de forma pública, contínua e duradoura, com o objetivo de constituir família, nos termos do art. 1.723 do Código Civil Brasileiro (Lei nº 10.406/2002). Declaramos ainda que não possuímos impedimentos legais para a união e que as informações prestadas são verdadeiras.`,
     };
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Declarante${t === 'decl_uniao' ? 's' : ''}</div>
@@ -66,7 +66,7 @@ window.DocFinanceiro = function buildFinanceiro(t, params) {
 
   // ════ CONFISSÃO DE DÍVIDA / PARCELAMENTO / QUITAÇÃO ════
   if (['confissao_divida','parcelamento','quitacao'].includes(t)) {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento Particular · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
@@ -112,7 +112,7 @@ window.DocFinanceiro = function buildFinanceiro(t, params) {
   // ════ NDA / CONFIDENCIALIDADE ════
   // ════ NOTA SIMPLES DE SERVIÇO ════
   if (t === 'nota_servico') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Nota de Prestação de Serviço · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Dados</div>

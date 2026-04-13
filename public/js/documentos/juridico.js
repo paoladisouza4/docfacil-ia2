@@ -16,7 +16,7 @@ window.DocJuridico = function buildJuridico(t, params) {
       politica_priv: 'Política de Privacidade',
       termo_uso: 'Termos de Uso da Plataforma',
     };
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">${titulos[t]} · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Responsável pelo Tratamento</div>
@@ -64,7 +64,7 @@ window.DocJuridico = function buildJuridico(t, params) {
 
   // ════ NOTIFICAÇÃO EXTRAJUDICIAL ════
   if (t === 'notif_extra') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Notificação Extrajudicial · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Identificação das Partes</div>
@@ -90,7 +90,7 @@ window.DocJuridico = function buildJuridico(t, params) {
 
   // ════ ACORDO AMIGÁVEL ════
   if (t === 'acordo_amigavel') {
-    return `${cabecalho}
+    return `${head}
     <div class="doc-subtitle">Instrumento de Acordo Amigável entre Partes · ${dateStr}</div>
     <div class="parties-block">
       <div class="parties-title">Qualificação das Partes</div>
