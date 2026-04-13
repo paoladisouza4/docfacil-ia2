@@ -425,6 +425,10 @@
       </div>
 
       <div id="step-2" class="wizard-body" style="display:none;">
+        <!-- Conteúdo customizado por tipo (injetado pelo DocFormularios) -->
+        <div id="step-2-custom-content" style="display:none;"></div>
+        <!-- Conteúdo padrão (mostrado quando não há form específico) -->
+        <div id="step-2-default-content">
         <div class="wizard-title">Dados das Partes</div>
         <div class="wizard-subtitle">Informe os dados de ambas as partes</div>
         <div class="section-label">Parte A — <span id="role-a-label">Contratante</span></div>
@@ -477,9 +481,14 @@
       </div>
 
         </div><!-- /testemunhas-section -->
+        </div><!-- /step-2-default-content -->
       </div><!-- /step-2 -->
 
       <div id="step-3" class="wizard-body" style="display:none;">
+        <!-- Conteúdo customizado por tipo -->
+        <div id="step-3-custom-content" style="display:none;"></div>
+        <!-- Conteúdo padrão -->
+        <div id="step-3-default-content">
         <div class="wizard-title">Objeto e Prazo</div>
         <div class="wizard-subtitle">Descreva detalhadamente o que está sendo contratado</div>
         <div class="form-grid">
@@ -495,6 +504,9 @@
           <div class="field form-full"><label>Entregáveis / Escopo detalhado (opcional)</label><textarea id="obj_entregaveis" rows="2" placeholder="Liste os entregáveis específicos..."></textarea></div>
         </div>
       </div>
+
+        </div><!-- /step-3-default-content -->
+      </div><!-- /step-3 -->
 
       <div id="step-4" class="wizard-body" style="display:none;">
         <div class="wizard-title">Valores e Pagamento</div>
@@ -684,6 +696,7 @@
 
 <!-- ═══ Módulos de Documento (carregados antes do app.js) ═══ -->
 <script src="js/documentos/helpers.js"></script>
+<script src="js/formularios.js"></script>
 <script src="js/documentos/locacao.js"></script>
 <script src="js/documentos/contratos.js"></script>
 <script src="js/documentos/financeiro.js"></script>

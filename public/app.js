@@ -412,6 +412,13 @@ function gotoPage(page) {
   document.getElementById('header-title').textContent = PAGE_TITLES[page] || '';
   closeSidebar();
 
+  // Fecha todos os modais/overlays ao trocar de página
+  ['ia-modal-overlay','ia-loading-overlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.body.style.overflow = '';
+
   if (page === 'mydocs')    renderDocs();
   if (page === 'dashboard') updateDashboard();
   if (page === 'create')    resetWizard();
@@ -459,6 +466,19 @@ function selectType(id) {
   // Aplica regras e config do wizard por tipo
   applyWizardRules(id);
   updateStep3Hints(id);
+  // Injeta formulário específico se disponível
+  injectCustomForms(id);
+}
+
+function injectCustomForms(typeId) {
+  if (!window.DocFormularios?.temFormEspecifico(typeId)) return;
+  // Renderiza step 2 customizado
+  window.DocFormularios.renderStep(typeId, 2, 'step-2-custom-content');
+  // Renderiza step 3 customizado se existir
+  const cfg = window.DocFormularios.getCfg(typeId);
+  if (cfg?.step3) {
+    window.DocFormularios.renderStep(typeId, 3, 'step-3-custom-content');
+  }
 }
 
 function updateStep2Title(id) {
@@ -592,10 +612,14 @@ function resetWizard() {
 function wizardNext() {
   if (currentStep === 1 && !selectedType) { showNotif('Selecione um tipo de documento', '⚠️'); return; }
   if (currentStep === 2) {
-    if (!V('p_a_nome')) { showNotif('Preencha o nome da Parte A', '⚠️'); return; }
-    if (window._docTemParteB !== false && !V('p_b_nome')) { showNotif('Preencha o nome da Parte B', '⚠️'); return; }
+    if (!V('p_a_nome')) { showNotif('Preencha o nome / nome completo', '⚠️'); return; }
+    if (window._docTemParteB !== false && !V('p_b_nome')) { showNotif('Preencha o nome da outra parte', '⚠️'); return; }
   }
-  if (currentStep === 3 && !V('obj_desc')) { showNotif('Preencha a descrição do documento', '⚠️'); return; }
+  if (currentStep === 3) {
+    // Para tipos com formulário específico, obj_desc pode ser opcional
+    const hasCustom = window.DocFormularios?.temFormEspecifico(selectedType);
+    if (!hasCustom && !V('obj_desc')) { showNotif('Preencha a descrição do documento', '⚠️'); return; }
+  }
   // Auto-preenche Foro e Local com cidade do step 3
   if (currentStep === 3) {
     const localExec  = V('obj_local');
@@ -1140,6 +1164,31 @@ function getActiveSteps(typeId) {
 function applyWizardRules(typeId) {
   const r = DOC_WIZARD_RULES[typeId] || DOC_WIZARD_DEFAULT;
   const cfg = WIZARD_CONFIG[typeId] || WIZARD_DEFAULT;
+  const hasCustomForm = window.DocFormularios?.temFormEspecifico(typeId);
+  const customCfg = window.DocFormularios?.getCfg(typeId);
+
+  // ── Formulário específico vs padrão ──
+  const s2custom  = document.getElementById('step-2-custom-content');
+  const s2default = document.getElementById('step-2-default-content');
+  const s3custom  = document.getElementById('step-3-custom-content');
+  const s3default = document.getElementById('step-3-default-content');
+
+  if (hasCustomForm) {
+    if (s2custom)  s2custom.style.display  = '';
+    if (s2default) s2default.style.display = 'none';
+    if (customCfg?.step3) {
+      if (s3custom)  s3custom.style.display  = '';
+      if (s3default) s3default.style.display = 'none';
+    } else {
+      if (s3custom)  s3custom.style.display  = 'none';
+      if (s3default) s3default.style.display = '';
+    }
+  } else {
+    if (s2custom)  s2custom.style.display  = 'none';
+    if (s2default) s2default.style.display = '';
+    if (s3custom)  s3custom.style.display  = 'none';
+    if (s3default) s3default.style.display = '';
+  }
 
   // ── Parte B ──
   const parteBSection = document.getElementById('parte-b-section');
