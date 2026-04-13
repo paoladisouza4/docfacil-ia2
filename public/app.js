@@ -419,6 +419,10 @@ function gotoPage(page) {
   });
   document.body.style.overflow = '';
 
+  // Oculta wizard-nav quando não está na página de criação
+  const wizNav = document.querySelector('.wizard-nav');
+  if (wizNav) wizNav.style.display = page === 'create' ? 'flex' : 'none';
+
   if (page === 'mydocs')    renderDocs();
   if (page === 'dashboard') updateDashboard();
   if (page === 'create')    resetWizard();
@@ -1614,9 +1618,113 @@ function markReady() {
 //  PDF PROFISSIONAL
 // ════════════════════════════════════════════════════════════════
 
+
+// ════════════════════════════════════════════════════════════════
+//  PDF PROFISSIONAL — CURRÍCULO
+// ════════════════════════════════════════════════════════════════
+function downloadPDFCurriculo(d) {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+
+  const pa  = d.pa || {};
+  const obj = d.obj || {};
+  const lm = 20, rm = 190, W = rm - lm;
+  let y = 20;
+
+  // ── Nome ──
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(20);
+  pdf.setTextColor(30,30,30);
+  pdf.text(pa.nome || 'Nome do Candidato', lm, y);
+  y += 7;
+
+  // ── Cargo / área ──
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(11);
+  pdf.setTextColor(100,100,100);
+  pdf.text(pa.prof || '', lm, y);
+  y += 5;
+
+  // ── Linha separadora ──
+  pdf.setFillColor(201,169,110);
+  pdf.rect(lm, y, W, 0.7, 'F');
+  y += 4;
+
+  // ── Contatos ──
+  pdf.setFontSize(9);
+  pdf.setTextColor(80,80,80);
+  const contatos = [pa.tel, pa.email, pa.end].filter(Boolean);
+  if (contatos.length) {
+    pdf.text(contatos.join('   |   '), lm, y);
+    y += 5;
+  }
+
+  // ── Linha ──
+  pdf.setDrawColor(220,220,220);
+  pdf.line(lm, y, rm, y);
+  y += 6;
+
+  function secao(titulo, texto) {
+    if (!texto || texto === 'N/A — Currículo não usa este campo') return;
+    // Título da seção
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(10);
+    pdf.setTextColor(30,30,30);
+    pdf.text(titulo.toUpperCase(), lm, y);
+    y += 1;
+    pdf.setFillColor(201,169,110);
+    pdf.rect(lm, y, 30, 0.4, 'F');
+    y += 5;
+
+    // Texto da seção
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(9.5);
+    pdf.setTextColor(50,50,50);
+    const linhas = pdf.splitTextToSize(texto, W);
+    for (const l of linhas) {
+      if (y > 270) { pdf.addPage(); y = 20; }
+      pdf.text(l, lm, y);
+      y += 4.5;
+    }
+    y += 3;
+  }
+
+  secao('Objetivo Profissional', obj.obrig_a);
+  secao('Experiência Profissional', obj.desc);
+  secao('Formação e Habilidades', obj.entregaveis);
+
+  // LinkedIn
+  if (obj.local && obj.local !== 'Ex: São Paulo - SP ou Remoto') {
+    pdf.setFont('helvetica','italic');
+    pdf.setFontSize(9);
+    pdf.setTextColor(100,100,100);
+    pdf.text('LinkedIn / Portfólio: ' + obj.local, lm, y);
+    y += 5;
+  }
+
+  // Rodapé
+  const totalPages = pdf.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    pdf.setPage(i);
+    pdf.setFillColor(220,220,220);
+    pdf.rect(lm, 285, W, 0.3, 'F');
+    pdf.setFont('helvetica','italic');
+    pdf.setFontSize(7);
+    pdf.setTextColor(160);
+    pdf.text('Gerado pelo DocFácil · docfacil-ia.vercel.app', lm, 289);
+    pdf.text(`${i} / ${totalPages}`, rm, 289, { align:'right' });
+  }
+
+  pdf.save(`Curriculo_${(pa.nome||'').replace(/\s+/g,'_')}.pdf`);
+  showNotif('Currículo baixado com sucesso! 📄', '📄');
+}
+
 function downloadPDF() {
   const d = currentDocs.find(d => d.id === currentDocId);
   if (!d) return;
+
+  // Currículo tem PDF próprio profissional
+  if (d.type === 'curriculo') { downloadPDFCurriculo(d); return; }
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });

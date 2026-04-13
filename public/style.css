@@ -1175,3 +1175,35 @@ body {
 @media print {
   .doc-masthead { display:none !important; }
 }
+
+/* ════════════════════════════════════════
+   WIZARD NAV — fica fixo só dentro da página de criação
+   ════════════════════════════════════════ */
+#page-create {
+  display:none;
+  padding-bottom:80px; /* espaço para o wizard-nav */
+}
+#page-create.active { display:block; }
+
+.wizard-nav {
+  position:fixed;
+  bottom:0; left:var(--sidebar-w); right:0;
+  background:var(--bg);
+  border-top:1px solid var(--border);
+  padding:12px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:200;
+}
+
+/* Esconde wizard-nav quando page-create não está ativa */
+.page:not(.active) ~ * .wizard-nav,
+#page-create:not(.active) .wizard-nav {
+  display:none !important;
+}
+
+@media (max-width:768px) {
+  .wizard-nav { left:0; }
+  #page-create { padding-bottom:90px; }
+}

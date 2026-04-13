@@ -485,26 +485,24 @@
       </div><!-- /step-2 -->
 
       <div id="step-3" class="wizard-body" style="display:none;">
-        <!-- Conteúdo customizado por tipo -->
+        <!-- Conteúdo customizado por tipo (injetado pelo DocFormularios) -->
         <div id="step-3-custom-content" style="display:none;"></div>
-        <!-- Conteúdo padrão -->
+        <!-- Conteúdo padrão (mostrado quando não há form específico) -->
         <div id="step-3-default-content">
-        <div class="wizard-title">Objeto e Prazo</div>
-        <div class="wizard-subtitle">Descreva detalhadamente o que está sendo contratado</div>
-        <div class="form-grid">
-          <div class="field form-full"><label>Descrição do objeto / serviço *</label><textarea id="obj_desc" rows="4" placeholder="Descreva com detalhes o serviço, produto ou imóvel..."></textarea></div>
-          <div id="prazo-fields">
-          <div class="field"><label>Data de início</label><input id="obj_inicio" type="date"/></div>
-          <div class="field"><label>Data de término</label><input id="obj_fim" type="date"/></div>
-          <div class="field"><label>Vigência</label><select id="obj_vigencia"><option value="">Selecionar...</option><option value="determinado">Prazo determinado</option><option value="indeterminado">Prazo indeterminado</option><option value="12 meses">12 meses</option><option value="6 meses">6 meses</option><option value="3 meses">3 meses</option><option value="1 mês">1 mês</option></select></div>
-          </div><!-- /prazo-fields -->
-          <div class="field"><label>Local de execução</label><input id="obj_local" placeholder="Ex: São Paulo - SP ou Remoto"/></div>
-          <div class="field form-full"><label>Obrigações da Parte A</label><textarea id="obj_obrig_a" rows="2" placeholder="O que a Parte A deve fazer..."></textarea></div>
-          <div class="field form-full"><label>Obrigações da Parte B</label><textarea id="obj_obrig_b" rows="2" placeholder="O que a Parte B deve entregar..."></textarea></div>
-          <div class="field form-full"><label>Entregáveis / Escopo detalhado (opcional)</label><textarea id="obj_entregaveis" rows="2" placeholder="Liste os entregáveis específicos..."></textarea></div>
-        </div>
-      </div>
-
+          <div class="wizard-title">Objeto e Prazo</div>
+          <div class="wizard-subtitle">Descreva detalhadamente o que está sendo contratado</div>
+          <div class="form-grid">
+            <div class="field form-full"><label>Descrição do objeto / serviço *</label><textarea id="obj_desc" rows="4" placeholder="Descreva com detalhes o serviço, produto ou imóvel..."></textarea></div>
+            <div id="prazo-fields">
+              <div class="field"><label>Data de início</label><input id="obj_inicio" type="date"/></div>
+              <div class="field"><label>Data de término</label><input id="obj_fim" type="date"/></div>
+              <div class="field"><label>Vigência</label><select id="obj_vigencia"><option value="">Selecionar...</option><option value="determinado">Prazo determinado</option><option value="indeterminado">Prazo indeterminado</option><option value="12 meses">12 meses</option><option value="6 meses">6 meses</option><option value="3 meses">3 meses</option><option value="1 mês">1 mês</option></select></div>
+            </div><!-- /prazo-fields -->
+            <div class="field"><label>Local de execução</label><input id="obj_local" placeholder="Ex: São Paulo - SP ou Remoto"/></div>
+            <div class="field form-full"><label>Obrigações da Parte A</label><textarea id="obj_obrig_a" rows="2" placeholder="O que a Parte A deve fazer..."></textarea></div>
+            <div class="field form-full"><label>Obrigações da Parte B</label><textarea id="obj_obrig_b" rows="2" placeholder="O que a Parte B deve entregar..."></textarea></div>
+            <div class="field form-full"><label>Entregáveis / Escopo detalhado (opcional)</label><textarea id="obj_entregaveis" rows="2" placeholder="Liste os entregáveis específicos..."></textarea></div>
+          </div>
         </div><!-- /step-3-default-content -->
       </div><!-- /step-3 -->
 
