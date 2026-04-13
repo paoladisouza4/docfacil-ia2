@@ -81,25 +81,9 @@ function filterByStatus(val) {
   renderDocs(search, val);
 }
 
-function editDoc(id) {
-  viewDocument(id);
-  // Aguarda o DOM renderizar o documento antes de abrir o editor
-  setTimeout(() => editCurrentDoc(), 150);
-}
+function editDoc(id) { viewDocument(id); setTimeout(() => editCurrentDoc(), 100); }
 
-// FIX Bug 6: race condition — aguarda o DOM terminar de renderizar
-// viewDocument() antes de chamar downloadPDF().
-// Usa requestAnimationFrame aninhado para garantir dois ciclos de pintura,
-// cobrindo dispositivos lentos onde um único frame não é suficiente.
-function downloadDocPDF(id) {
-  viewDocument(id);
-  // Dois requestAnimationFrame garantem que o browser pintou o HTML antes do PDF
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      downloadPDF();
-    });
-  });
-}
+function downloadDocPDF(id) { viewDocument(id); setTimeout(downloadPDF, 300); }
 
 async function deleteDoc(id, e) {
   e?.stopPropagation();
@@ -125,3 +109,8 @@ function saveSettings() {
     });
   });
 }
+
+// ════════════════════════════════════════════════════════════════
+//  HELPERS GERAIS
+// ════════════════════════════════════════════════════════════════
+
