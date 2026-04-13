@@ -206,22 +206,45 @@ window.DocDeclaracoes = function buildDeclaracao(t, params) {
 
   // ════ NOTA SIMPLES DE SERVIÇO ════
 
-  // Currículo
+  // Currículo — preview profissional
   if (t === 'curriculo') {
-    return `${head}
-    <div class="doc-subtitle">${dateStr}</div>
-    <div class="parties-block">
-      <div class="parties-title">Dados do Candidato</div>
-      <div class="party"><div class="party-role">CANDIDATO:</div><p>${partyLine(pa,'CANDIDATO')}</p></div>
-    </div>
-    <div class="clausula"><div class="clausula-title">Objetivo Profissional</div><div class="clausula-body">
-      <p>${obj.obrig_a || 'Descreva seu objetivo profissional aqui.'}</p>
-    </div></div>
-    <div class="clausula"><div class="clausula-title">Experiência Profissional</div><div class="clausula-body">
-      <p>${obj.desc}</p>
-    </div></div>
-    ${obj.entregaveis ? '<div class="clausula"><div class="clausula-title">Formação e Competências</div><div class="clausula-body"><p>' + obj.entregaveis + '</p></div></div>' : ''}
-    ${aviso}`;
+    return `
+    <div style="font-family:'Georgia',serif;max-width:680px;margin:0 auto;padding:32px;">
+
+      <div style="border-bottom:3px solid #c9a96e;padding-bottom:16px;margin-bottom:20px;">
+        <div style="font-size:26px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;">${pa.nome || 'Nome do Candidato'}</div>
+        <div style="font-size:13px;color:#888;margin-top:4px;">${pa.prof || ''}</div>
+        <div style="font-size:12px;color:#aaa;margin-top:8px;display:flex;flex-wrap:wrap;gap:12px;">
+          ${pa.tel   ? `<span>📞 ${pa.tel}</span>` : ''}
+          ${pa.email ? `<span>✉️ ${pa.email}</span>` : ''}
+          ${pa.end   ? `<span>📍 ${pa.end}</span>` : ''}
+          ${obj.local && !obj.local.includes('São Paulo - SP ou Remoto') ? `<span>🔗 ${obj.local}</span>` : ''}
+        </div>
+      </div>
+
+      ${obj.obrig_a ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c9a96e;margin-bottom:6px;">Objetivo Profissional</div>
+        <div style="font-size:13px;color:#333;line-height:1.7;">${obj.obrig_a.replace(/
+/g,'<br>')}</div>
+      </div>` : ''}
+
+      ${obj.desc && obj.desc !== 'objeto conforme acordado entre as partes' ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c9a96e;margin-bottom:6px;">Experiência Profissional</div>
+        <div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;">${obj.desc}</div>
+      </div>` : ''}
+
+      ${obj.entregaveis ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c9a96e;margin-bottom:6px;">Formação e Competências</div>
+        <div style="font-size:13px;color:#333;line-height:1.7;white-space:pre-wrap;">${obj.entregaveis}</div>
+      </div>` : ''}
+
+      <div style="margin-top:24px;padding-top:12px;border-top:1px dashed #ddd;font-size:9px;color:#bbb;text-align:center;">
+        Gerado pelo DocFácil · modelo de referência · não constitui assessoria jurídica
+      </div>
+    </div>`;
   }
 
   return null;
