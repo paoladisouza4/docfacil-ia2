@@ -11,7 +11,7 @@ function hideAuth() {
   document.getElementById('auth-overlay').style.display = 'none';
 }
 
-// ── Menu mobile — abre/fecha + overlay para fechar ao clicar fora ──
+// ── Menu mobile ──
 function toggleLandNav() {
   const nav     = document.getElementById('land-mobile-nav');
   const overlay = document.getElementById('land-nav-overlay');
@@ -39,15 +39,7 @@ function closeLandNav() {
 // ── Modais institucionais ──
 function openModal(id) {
   const el = document.getElementById(id);
-  if (!el) return;
-  // Garante que o overlay ocupa toda a tela e centraliza o conteúdo interno
-  el.style.display        = 'flex';
-  el.style.position       = 'fixed';
-  el.style.inset          = '0';
-  el.style.alignItems     = 'center';
-  el.style.justifyContent = 'center';
-  el.style.zIndex         = '1000';
-  document.body.style.overflow = 'hidden';
+  if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 }
 function closeModalById(id) {
   const el = document.getElementById(id);
@@ -59,17 +51,17 @@ function closeModal(e, overlay) {
 
 // ── FAQ accordion ──
 function toggleFaq(el) {
-  const a = el.querySelector('.inst-faq-a');
-  const s = el.querySelector('.inst-faq-q span');
+  const a    = el.querySelector('.inst-faq-a');
+  const s    = el.querySelector('.inst-faq-q span');
   const open = a.style.display === 'block';
-  // Fecha todos
   document.querySelectorAll('.inst-faq-a').forEach(x => x.style.display = 'none');
   document.querySelectorAll('.inst-faq-q span').forEach(x => x.textContent = '+');
-  // Abre este se estava fechado
   if (!open) { a.style.display = 'block'; if (s) s.textContent = '−'; }
 }
 
 // ── Toggle testemunhas ──
+// NOTA: testemunhasAtivas é declarada APENAS aqui (app-core.js).
+// app.js foi limpo das declarações duplicadas.
 let testemunhasAtivas = false;
 function toggleTestemunhas() {
   testemunhasAtivas = !testemunhasAtivas;
@@ -84,7 +76,6 @@ function toggleTestemunhas() {
     fields.style.display  = 'none';
     label.textContent     = 'Não incluir';
     toggle.classList.remove('active');
-    // Limpa os campos
     ['test1_nome','test1_doc','test2_nome','test2_doc'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
@@ -94,6 +85,8 @@ function toggleTestemunhas() {
 
 // ════════════════════════════════════════════════════════════════
 //  FIREBASE AUTH
+//  ATENÇÃO: onAuthStateChanged registrado UMA única vez aqui.
+//  A versão em app.js foi REMOVIDA para evitar duplo listener.
 // ════════════════════════════════════════════════════════════════
 
 function waitForFirebase(cb, tries = 0) {
@@ -102,22 +95,21 @@ function waitForFirebase(cb, tries = 0) {
   setTimeout(() => waitForFirebase(cb, tries + 1), 150);
 }
 
-// Auth state listener
 waitForFirebase(({ auth, onAuthStateChanged }) => {
   onAuthStateChanged(auth, user => {
     document.getElementById('loading-screen').style.display = 'none';
     if (user) {
       currentUser = user;
       document.getElementById('landing-screen').style.display = 'none';
-      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('auth-overlay').style.display   = 'none';
       startApp();
     } else {
       document.getElementById('landing-screen').style.display = 'block';
-      document.getElementById('app').style.display = 'none';
+      document.getElementById('app').style.display            = 'none';
     }
   });
-  document.getElementById('loading-screen').style.display = 'flex';
-  document.getElementById('landing-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display  = 'flex';
+  document.getElementById('landing-screen').style.display  = 'none';
 });
 
 function authTab(tab) {
@@ -129,10 +121,10 @@ function authTab(tab) {
 }
 
 function doLogin() {
-  const email  = document.getElementById('login-email').value.trim();
-  const pass   = document.getElementById('login-pass').value;
-  const errEl  = document.getElementById('auth-error');
-  const btn    = document.getElementById('login-btn');
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('auth-error');
+  const btn   = document.getElementById('login-btn');
 
   if (!email || !pass) { showAuthErr(errEl, 'Preencha e-mail e senha.'); return; }
   errEl.style.display = 'none';
@@ -173,7 +165,7 @@ function doLogout() {
   waitForFirebase(({ auth, signOut }) => {
     signOut(auth).then(() => {
       currentUser = null; currentDocs = []; iaHistory = [];
-      document.getElementById('app').style.display = 'none';
+      document.getElementById('app').style.display            = 'none';
       document.getElementById('landing-screen').style.display = 'block';
     });
   });
@@ -183,13 +175,13 @@ function showAuthErr(el, msg) { el.textContent = msg; el.style.display = 'block'
 
 function fbMsg(code) {
   const m = {
-    'auth/user-not-found':       'Usuário não encontrado.',
-    'auth/wrong-password':       'Senha incorreta.',
-    'auth/invalid-credential':   'E-mail ou senha inválidos.',
-    'auth/email-already-in-use': 'E-mail já cadastrado.',
-    'auth/invalid-email':        'E-mail inválido.',
-    'auth/weak-password':        'Senha muito fraca (mín. 6 caracteres).',
-    'auth/too-many-requests':    'Muitas tentativas. Aguarde.',
+    'auth/user-not-found':        'Usuário não encontrado.',
+    'auth/wrong-password':        'Senha incorreta.',
+    'auth/invalid-credential':    'E-mail ou senha inválidos.',
+    'auth/email-already-in-use':  'E-mail já cadastrado.',
+    'auth/invalid-email':         'E-mail inválido.',
+    'auth/weak-password':         'Senha muito fraca (mín. 6 caracteres).',
+    'auth/too-many-requests':     'Muitas tentativas. Aguarde.',
     'auth/network-request-failed':'Erro de conexão.',
   };
   return m[code] || 'Erro ao autenticar. Tente novamente.';
@@ -216,13 +208,15 @@ async function saveDocFS(docObj) {
   });
 }
 
+// FIX Bug 7: usa dataWithoutHtml para não inflar o Firestore com HTML gigante
 async function updateDocFS(docObj) {
   return new Promise(resolve => {
     waitForFirebase(async ({ db, doc, updateDoc }) => {
       try {
         if (docObj.fsId) {
-          const { html: _h, ...dataWithoutHtml } = docObj; // salva tudo menos html gigante separado
-          await updateDoc(doc(db, 'documents', docObj.fsId), { ...docObj });
+          // Separa html do resto — salva apenas dados estruturados no Firestore
+          const { html: _html, ...dataWithoutHtml } = docObj;
+          await updateDoc(doc(db, 'documents', docObj.fsId), dataWithoutHtml);
         }
       } catch (e) { /* fallback ok */ }
       resolve();
@@ -234,7 +228,7 @@ async function loadDocsFS() {
   return new Promise(resolve => {
     waitForFirebase(async ({ db, collection, getDocs, query, where }) => {
       try {
-        const q   = query(collection(db, 'documents'), where('userId', '==', currentUser.uid));
+        const q    = query(collection(db, 'documents'), where('userId', '==', currentUser.uid));
         const snap = await getDocs(q);
         const docs = snap.docs.map(d => ({ fsId: d.id, ...d.data() }));
         docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -313,14 +307,25 @@ function gotoPage(page) {
   document.getElementById('header-title').textContent = PAGE_TITLES[page] || '';
   closeSidebar();
 
+  // Fecha todos os modais/overlays ao trocar de página
+  ['ia-modal-overlay','ia-loading-overlay'].forEach(id => {
+    const elModal = document.getElementById(id);
+    if (elModal) elModal.style.display = 'none';
+  });
+  document.body.style.overflow = '';
+
+  // Oculta wizard-nav quando não está na página de criação
+  const wizNav = document.querySelector('.wizard-nav');
+  if (wizNav) wizNav.style.display = page === 'create' ? 'flex' : 'none';
+
   if (page === 'mydocs')    renderDocs();
   if (page === 'dashboard') updateDashboard();
   if (page === 'create')    resetWizard();
 }
 
 function toggleSidebar() {
-  const s = document.getElementById('sidebar');
-  const o = document.getElementById('sidebar-overlay');
+  const s    = document.getElementById('sidebar');
+  const o    = document.getElementById('sidebar-overlay');
   const open = s.classList.toggle('mobile-open');
   o.style.display = open ? 'block' : 'none';
 }
@@ -328,8 +333,3 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('mobile-open');
   document.getElementById('sidebar-overlay').style.display = 'none';
 }
-
-// ════════════════════════════════════════════════════════════════
-//  WIZARD — Criar Documento
-// ════════════════════════════════════════════════════════════════
-
