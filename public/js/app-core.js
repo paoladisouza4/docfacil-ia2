@@ -39,7 +39,15 @@ function closeLandNav() {
 // ── Modais institucionais ──
 function openModal(id) {
   const el = document.getElementById(id);
-  if (el) { el.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  if (!el) return;
+  // Garante que o overlay ocupa toda a tela e centraliza o conteúdo interno
+  el.style.display        = 'flex';
+  el.style.position       = 'fixed';
+  el.style.inset          = '0';
+  el.style.alignItems     = 'center';
+  el.style.justifyContent = 'center';
+  el.style.zIndex         = '1000';
+  document.body.style.overflow = 'hidden';
 }
 function closeModalById(id) {
   const el = document.getElementById(id);

@@ -47,14 +47,24 @@ function downloadPDF() {
   // Extrai texto e limpa
   const rawText = tmp.innerText;
   const text = rawText.split('\n')
-    .filter(line => {
-      const t = line.trim();
-      return t !== 'null'
-        && t !== 'nullCPF: null'
-        && !t.includes('nullCPF')
-        && t !== ''
-        || t === ''; // mantém linhas vazias para espaçamento
-    })
+    .map(line => line
+      .replace(/\bnull\b/g, '')
+      .replace(/\bundefined\b/g, '')
+      .replace(/CPF\/CNPJ:\s*,/g, '')
+      .replace(/CPF:\s*,/g, '')
+      .replace(/CPF\/CNPJ:\s*$/g, '')
+      .replace(/CPF:\s*$/g, '')
+      .replace(/,\s*,/g, ',')
+      .replace(/\.\s*,/g, '.')
+      .trim()
+    )
+    .filter(t =>
+      t !== ''
+      && t !== 'CPF/CNPJ:'
+      && t !== 'CPF:'
+      && t !== ','
+      && !/^[,\s.]+$/.test(t)
+    )
     .join('\n');
 
   const W = 170; // largura útil

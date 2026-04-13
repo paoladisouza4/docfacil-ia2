@@ -754,14 +754,14 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       ${t === 'locacao_fiador' ? `<div class="sig-grid"><div class="sig-item"><div class="sig-line"></div><div class="sig-name">_____________________________</div><div class="sig-role">FIADOR</div><div class="sig-doc">CPF: _____________________</div></div><div class="sig-item"></div></div>` : ''}
       ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>` : ""}
     </div>
     ${aviso}`;
@@ -787,8 +787,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">RECEBEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PAGANTE</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">RECEBEDOR</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PAGANTE</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
     </div>
     ${aviso}`;
@@ -815,8 +815,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">DECLARANTE</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
-        ${t === 'decl_uniao' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DECLARANTE 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">DECLARANTE</div><div class="sig-doc">${pa.doc ? 'CPF: ' + pa.doc : ''}</div></div>
+        ${t === 'decl_uniao' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DECLARANTE 2</div><div class="sig-doc">${pb.doc ? 'CPF: ' + pb.doc : ''}</div></div>` : '<div class="sig-item"></div>'}
       </div>
     </div>
     ${aviso}`;
@@ -855,13 +855,13 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CREDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DEVEDOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CREDOR</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">DEVEDOR</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>` : ""}
     </div>
     ${aviso}`;
@@ -901,13 +901,13 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE DIVULGANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE RECEPTORA</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE DIVULGANTE</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE RECEPTORA</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>` : ""}
     </div>
     ${aviso}`;
@@ -968,13 +968,13 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">CONTRATADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">CONTRATADO</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>` : ""}
     </div>
     ${aviso}`;
@@ -1020,13 +1020,13 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">INFLUENCIADOR DIGITAL</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTRATANTE</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">INFLUENCIADOR DIGITAL</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       ${t1.nome ? `<div class="witnesses-block">
         <div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>` : ""}
     </div>
     ${aviso}`;
@@ -1069,12 +1069,12 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">VENDEDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMPRADOR</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">VENDEDOR</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMPRADOR</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1118,12 +1118,12 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARCEIRO A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARCEIRO B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARCEIRO A</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARCEIRO B</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1162,12 +1162,12 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">COMITENTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMISSIONADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">COMITENTE</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">COMISSIONADO</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1230,8 +1230,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1261,8 +1261,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">LOCADOR</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">LOCATÁRIO</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1318,7 +1318,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
       <p>Respeitosamente,</p><br>
       <div class="sig-line" style="max-width:300px;"></div>
       <p><strong>${pa.nome}</strong></p>
-      <p>CPF: ${pa.doc}</p>
+      <p>${pa.doc ? 'CPF: ' + pa.doc : ''}</p>
       <p>${dateStr}</p>
     </div>
     <div style="margin-top:30px;padding:16px;border:1px solid #ddd;border-radius:4px;">
@@ -1347,7 +1347,7 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">Representante Legal</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">Representante Legal</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
         <div class="sig-item"></div>
       </div>
     </div>${aviso}`;
@@ -1382,8 +1382,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">EMPRESA CONCEDENTE</div><div class="sig-doc">CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">ESTAGIÁRIO(A)</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">EMPRESA CONCEDENTE</div><div class="sig-doc">${pa.doc ? 'CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">ESTAGIÁRIO(A)</div><div class="sig-doc">${pb.doc ? 'CPF: ' + pb.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1414,8 +1414,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PRESTADOR DE SERVIÇO</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">TOMADOR — Ciente</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PRESTADOR DE SERVIÇO</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">TOMADOR — Ciente</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1452,8 +1452,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome || 'TITULAR DOS DADOS'}</div><div class="sig-role">TITULAR</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTROLADOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome || 'TITULAR DOS DADOS'}</div><div class="sig-role">TITULAR</div><div class="sig-doc">${pb.doc ? 'CPF: ' + pb.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">CONTROLADOR</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
       </div>
     </div>` : `
     <div class="clausula"><div class="clausula-title">1. Sobre ${t === 'politica_priv' ? 'a Política de Privacidade' : 'os Termos de Uso'}</div><div class="clausula-body">
@@ -1493,8 +1493,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">NOTIFICANTE</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Ciente: ${pb.nome}</div><div class="sig-role">NOTIFICADO</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1527,12 +1527,12 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE A</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE B</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">PARTE A</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">PARTE B</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1575,12 +1575,12 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO ADMINISTRADOR</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO ADMINISTRADOR</div><div class="sig-doc">${pa.doc ? 'CPF: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO</div><div class="sig-doc">${pb.doc ? 'CPF: ' + pb.doc : ''}</div></div>
       </div>
       <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1619,8 +1619,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO A</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO B</div><div class="sig-doc">CPF: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">SÓCIO A</div><div class="sig-doc">${pa.doc ? 'CPF: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO B</div><div class="sig-doc">${pb.doc ? 'CPF: ' + pb.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1656,12 +1656,12 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">INVESTIDOR</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">EMPRESA INVESTIDA</div><div class="sig-doc">CNPJ: ${pb.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">INVESTIDOR</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">EMPRESA INVESTIDA</div><div class="sig-doc">${pb.doc ? 'CNPJ: ' + pb.doc : ''}</div></div>
       </div>
       <div class="witnesses-block"><div class="witnesses-title">Testemunhas</div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
       </div>
     </div>${aviso}`;
   }
@@ -1693,8 +1693,8 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
     <div class="signatures-block">
       <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
       <div class="sig-grid">
-        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">REQUERENTE / SÓCIO</div><div class="sig-doc">CPF: ${pa.doc}</div></div>
-        ${pb.nome && pb.nome !== '—' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO 2</div><div class="sig-doc">CPF: ${pb.doc}</div></div>` : '<div class="sig-item"></div>'}
+        <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">REQUERENTE / SÓCIO</div><div class="sig-doc">${pa.doc ? 'CPF: ' + pa.doc : ''}</div></div>
+        ${pb.nome && pb.nome !== '—' ? `<div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">SÓCIO 2</div><div class="sig-doc">${pb.doc ? 'CPF: ' + pb.doc : ''}</div></div>` : '<div class="sig-item"></div>'}
       </div>
     </div>${aviso}`;
   }
@@ -1752,13 +1752,13 @@ function buildDocHTML({ num, docTitle, dateStr, pa, pb, t1, t2, obj, val, jur, r
   <div class="signatures-block">
     <div class="signatures-title">${jur.local ? jur.local + ', ' + dateStr : dateStr}, ${dateStr}</div>
     <div class="sig-grid">
-      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">${roleA}</div><div class="sig-doc">CPF/CNPJ: ${pa.doc}</div></div>
-      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">${roleB}</div><div class="sig-doc">CPF/CNPJ: ${pb.doc}</div></div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pa.nome}</div><div class="sig-role">${roleA}</div><div class="sig-doc">${pa.doc ? 'CPF/CNPJ: ' + pa.doc : ''}</div></div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${pb.nome}</div><div class="sig-role">${roleB}</div><div class="sig-doc">${pb.doc ? 'CPF/CNPJ: ' + pb.doc : ''}</div></div>
     </div>
     <div class="witnesses-block">
       <div class="witnesses-title">Testemunhas</div>
-      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">CPF: ${t1.doc}</div></div>
-      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">CPF: ${t2.doc}</div></div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t1.nome}</div><div class="sig-doc">${t1.doc ? 'CPF: ' + t1.doc : ''}</div></div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">${t2.nome}</div><div class="sig-doc">${t2.doc ? 'CPF: ' + t2.doc : ''}</div></div>
     </div>
   </div>
   ${aviso}`;
