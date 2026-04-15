@@ -1,152 +1,102 @@
 // ══════════════════════════════════════════════════════════
-// lib/generatePDF.js — VERSÃO FINAL ABSOLUTA (DOCFÁCIL IA)
+//  generatePDF.js — Versão Final Robusta (DocFácil IA)
+//  Gera PDF com fidelidade total em Celular, PC e Tablet
 // ══════════════════════════════════════════════════════════
 
-import { chromium } from 'playwright';
+import html2pdf from 'html2pdf.js';
 
 /**
- * Gera o PDF com fidelidade total, injetando Tailwind e fontes.
+ * Baixa o documento como PDF mantendo a estrutura profissional.
  */
 export async function downloadPDF(html, title = 'documento') {
-  let browser;
-
   try {
-    // 1. Lança o navegador Chromium (Essencial para o Playwright)
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-
-    const page = await browser.newPage();
-
-    // 2. FORÇA VIEWPORT DESKTOP: Evita que o layout tente ser "mobile"
-    await page.setViewportSize({ width: 1200, height: 1600 });
-
-    // 3. MONTAGEM DO HTML COM TAILWIND E FONTES (DM SANS / SERIF)
-    const fullHTML = `
+    const element = document.createElement('div');
+    
+    // Injetamos o CSS detalhado para garantir a organização em qualquer console
+    element.innerHTML = `
       <!DOCTYPE html>
-      <html lang="pt-br">
+      <html>
       <head>
         <meta charset="UTF-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        
-        <script src="https://cdn.tailwindcss.com"></script>
-        
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
-        
-        <script>
-          // Configuração do Tailwind para reconhecer as fontes do projeto
-          tailwind.config = {
-            theme: {
-              extend: {
-                fontFamily: {
-                  sans: ['DM Sans', 'sans-serif'],
-                  serif: ['DM Serif Display', 'serif'],
-                }
-              }
-            }
-          }
-        </script>
-
+        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
         <style>
-          /* RESET DE IMPRESSÃO PROFISSIONAL */
-          * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          
+          * { box-sizing: border-box; margin: 0; padding: 0; }
           body { 
-            background-color: white; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'DM Sans', sans-serif;
-            color: #1a1a1a;
+            font-family: 'DM Sans', sans-serif; 
+            font-size: 12px; 
+            color: #1a1a1a; 
+            background: white;
           }
-
-          /* CAIXA A4: Trava a largura para evitar texto encavalado */
-          .pdf-content-wrapper {
-            width: 190mm;
+          .pdf-wrapper { 
+            width: 190mm; 
+            padding: 16mm 20mm; 
             margin: 0 auto;
-            position: relative;
           }
-
-          /* CONTROLE DE QUEBRA DE PÁGINA: Impede cortes no meio de assinaturas ou cláusulas */
-          .clausula, .signatures-block, .parties-block, .sig-item {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-
-          p { text-align: justify; text-justify: inter-word; line-height: 1.6; margin-bottom: 12px; }
-          
-          /* Garante que tabelas e grids flexíveis do Tailwind funcionem no PDF */
-          .flex { display: flex !important; }
-          .grid { display: grid !important; }
+          .doc-header { text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #1a1a1a; }
+          .doc-title { font-family: 'DM Serif Display', serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+          .doc-subtitle { font-size: 11px; color: #555; }
+          .doc-num { font-size: 10px; color: #888; margin-top: 3px; font-weight: 600; }
+          .parties-block { background: #f8f8f6; border: 1px solid #e5e3dc; border-radius: 6px; padding: 14px 18px; margin: 18px 0; }
+          .parties-title { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+          .party { margin-bottom: 8px; }
+          .party-role { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #555; margin-bottom: 2px; }
+          .party p { font-size: 11px; color: #1a1a1a; line-height: 1.5; }
+          p { font-size: 12px; color: #333; line-height: 1.7; margin-bottom: 6px; text-align: justify; }
+          .clausula { margin: 14px 0; page-break-inside: avoid; }
+          .clausula-title { font-size: 11px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+          strong { font-weight: 700; }
+          .signatures-block { margin-top: 36px; padding-top: 18px; border-top: 1px solid #ddd; page-break-inside: avoid; }
+          .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+          .sig-item { text-align: center; }
+          .sig-line { border-top: 1px solid #1a1a1a; margin-bottom: 6px; }
+          .sig-name { font-size: 11px; font-weight: 600; }
+          .sig-role { font-size: 9px; color: #555; text-transform: uppercase; }
+          .doc-aviso { font-size: 9px; color: #aaa; text-align: center; margin-top: 24px; padding-top: 12px; border-top: 1px solid #eee; font-style: italic; }
         </style>
       </head>
-      <body class="p-[15mm] bg-white">
-        <div class="pdf-content-wrapper">
+      <body>
+        <div class="pdf-wrapper">
           ${html}
         </div>
       </body>
       </html>
     `;
 
-    // 4. DEFINE O CONTEÚDO E AGUARDA REDE FICAR OCIOSA (Carregamento do CDN)
-    await page.setContent(fullHTML, { 
-      waitUntil: 'networkidle' 
-    });
+    const opt = {
+      margin: 0,
+      filename: `${title.replace(/[^a-zA-Z0-9\-_]/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        windowWidth: 800 
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
 
-    // 5. EMULA MÍDIA DE IMPRESSÃO E AGUARDA CARREGAMENTO DAS FONTES
-    await page.emulateMedia({ media: 'print' });
-    await page.evaluateHandle('document.fonts.ready');
-
-    // 6. GERAÇÃO DO PDF EM FORMATO A4 COM MARGENS DE SEGURANÇA
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      scale: 1,
-      margin: {
-        top: '15mm',
-        bottom: '15mm',
-        left: '15mm',
-        right: '15mm'
-      }
-    });
-
-    // 7. GERA O DOWNLOAD PARA O USUÁRIO
-    const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${title.replace(/\s+/g, '_')}.pdf`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    await html2pdf().set(opt).from(element).save();
 
   } catch (err) {
-    console.error('Falha na geração do PDF (Playwright):', err);
-  } finally {
-    if (browser) await browser.close();
+    console.error('Erro detalhado na geração do PDF:', err);
+    printDocument(html, title);
   }
 }
 
-/**
- * Função Fallback para Impressão Direta no Navegador
- */
 export function printDocument(html, title = 'documento') {
   const win = window.open('', '_blank');
+  if (!win) return;
   win.document.write(`
     <html>
       <head>
         <title>${title}</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-          @media print { body { padding: 0; } }
-          body { padding: 20mm; font-family: sans-serif; }
-        </style>
+        <style>body { font-family: sans-serif; padding: 20mm; }</style>
       </head>
-      <body>\${html}</body>
+      <body>
+        ${html}
+        <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
+      </body>
     </html>
   `);
   win.document.close();
-  setTimeout(() => {
-    win.focus();
-    win.print();
-  }, 500);
 }
