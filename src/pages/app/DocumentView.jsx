@@ -23,38 +23,24 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
   const handlePDF = async () => {
     setExporting(true)
     try {
-      // FIX: garante que sempre usa o HTML renderizado do DOM.
-      // Nunca usa document.html como fallback pois pode ser Markdown/JSON cru.
-      const html = paperRef.current?.innerHTML
-      if (!html || html.trim() === '') {
-        showNotif?.('Não foi possível capturar o conteúdo do documento.', '❌')
-        return
-      }
+      const html = paperRef.current?.innerHTML || document.html
       await exportPDF(html, document.title || 'documento')
       showNotif?.('PDF gerado com sucesso! 🎉', '✅')
-    } catch (err) {
-      console.error('Erro ao gerar PDF:', err)
-      // FIX: fallback também usa o HTML renderizado do DOM, não document.html cru
-      const html = paperRef.current?.innerHTML
-      if (html) {
-        exportPrint(html, document.title)
-      } else {
-        showNotif?.('Erro ao gerar PDF. Tente usar a opção Imprimir.', '❌')
-      }
+    } catch {
+      exportPrint(document.html, document.title)
     } finally {
       setExporting(false)
     }
   }
 
   const handlePrint = () => {
-    // FIX: sempre usa o HTML renderizado do DOM
-    const html = paperRef.current?.innerHTML
-    if (!html) return
+    const html = paperRef.current?.innerHTML || document.html
     exportPrint(html, document.title)
   }
 
   const handleEditToggle = () => {
     if (editing) {
+      // save edited content
       const newHtml = paperRef.current?.innerHTML
       if (newHtml) onEdit?.({ ...document, html: newHtml })
       showNotif?.('Documento salvo!', '✅')
