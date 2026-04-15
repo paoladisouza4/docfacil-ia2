@@ -1,127 +1,96 @@
 // ══════════════════════════════════════════════════════════
-// generatePDF.js — Geração de PDF usando Playwright (Chrome headless)
-// Backend Node.js ONLY
+// generatePDF.js — CORRIGIDO PARA EVITAR TEXTO QUEBRADO
 // ══════════════════════════════════════════════════════════
 
 import { chromium } from 'playwright'
 
-/**
- * Gera PDF real a partir de HTML usando Playwright
- * @param {string} html  - HTML interno do documento
- * @param {string} title - nome do arquivo
- * @returns {Promise<Buffer>} PDF em buffer
- */
-export async function generatePDF(html, title = 'documento') {
-  const browser = await chromium.launch({
-    headless: true,
-  })
+export async function downloadPDF(html, title = 'documento') {
+  let browser
 
   try {
+    browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'] // Importante para Vercel/Linux
+    })
+
     const page = await browser.newPage()
 
     const fullHTML = `
       <!DOCTYPE html>
       <html>
       <head>
-        <meta charset="UTF-8" />
-
+        <meta charset="UTF-8"/>
         <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 
         <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
+          /* Forçamos o tamanho real da folha para o Playwright não 'esmagar' o texto */
+          * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
 
           body {
             font-family: 'DM Sans', sans-serif;
-            font-size: 12px;
+            font-size: 11.5pt; /* Usar pt em vez de px é mais estável para PDF */
+            line-height: 1.6;
             color: #1a1a1a;
-            padding: 20mm;
+            width: 180mm; /* Garante que o texto não sangre para as margens */
+            margin: 0 auto;
           }
 
-          .doc-header {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #1a1a1a;
-          }
-
-          .doc-title {
-            font-family: 'DM Serif Display', serif;
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-          }
-
-          .doc-subtitle {
-            font-size: 11px;
-            color: #555;
-          }
-
-          .doc-num {
-            font-size: 10px;
-            color: #888;
+          /* Correção das Quebras de Cláusulas */
+          .clausula {
+            margin: 15px 0;
+            page-break-inside: avoid; /* IMPEDE QUE UMA CLÁUSULA QUEBRE NO MEIO DA PÁGINA */
           }
 
           .parties-block {
-            background: #f8f8f6;
+            background: #f8f8f6 !important; /* !important garante que a cor apareça no PDF */
             border: 1px solid #e5e3dc;
             border-radius: 6px;
-            padding: 14px 18px;
-            margin: 18px 0;
-          }
-
-          .clausula {
-            margin: 14px 0;
-          }
-
-          .clausula-title {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-          }
-
-          .clausula-body p {
-            font-size: 11px;
-            line-height: 1.7;
-            text-align: justify;
+            padding: 15px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
           }
 
           p {
-            margin-bottom: 6px;
-            line-height: 1.7;
+            margin-bottom: 8px;
+            text-align: justify;
+            orphans: 3; /* Evita uma linha sozinha no fim da página */
+            widows: 3;  /* Evita uma linha sozinha no topo da página */
           }
 
-          strong { font-weight: 700; }
-
+          /* Ajuste das Assinaturas para não quebrar o layout */
           .signatures-block {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+            margin-top: 50px;
+            page-break-inside: avoid;
           }
 
           .sig-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
+            display: flex; /* Flex é mais estável que Grid para PDF simples no Playwright */
+            justify-content: space-between;
+            gap: 40px;
           }
 
-          .sig-item {
-            text-align: center;
+          .sig-item { 
+            flex: 1;
+            text-align: center; 
           }
 
           .sig-line {
             border-top: 1px solid #000;
-            margin-bottom: 6px;
+            margin-top: 40px;
+            margin-bottom: 5px;
           }
 
-          .sig-name { font-weight: 600; font-size: 11px; }
-          .sig-role { font-size: 9px; color: #555; text-transform: uppercase; }
-          .sig-doc { font-size: 9px; color: #888; }
-
+          /* Rodapé Fixo */
+          .doc-aviso {
+            font-size: 8.5pt;
+            color: #999;
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+          }
         </style>
       </head>
-
       <body>
         ${html}
       </body>
@@ -132,36 +101,27 @@ export async function generatePDF(html, title = 'documento') {
       waitUntil: 'networkidle',
     })
 
+    // Espera as fontes carregarem para não bugar o espaçamento
+    await page.evaluateHandle('document.fonts.ready');
+
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
+      displayHeaderFooter: false,
       margin: {
-        top: '20mm',
-        bottom: '20mm',
-        left: '15mm',
-        right: '15mm',
+        top: '25mm',    // Aumentei um pouco a margem para dar respiro
+        bottom: '25mm',
+        left: '20mm',
+        right: '20mm',
       },
     })
-
-    await browser.close()
 
     return pdfBuffer
 
   } catch (err) {
-    await browser.close()
+    console.error('Erro ao gerar PDF:', err)
     throw err
+  } finally {
+    if (browser) await browser.close()
   }
-}
-
-/**
- * API helper (opcional)
- * envia PDF direto pro browser download
- */
-export async function sendPDFResponse(res, html, title) {
-  const pdf = await generatePDF(html, title)
-
-  res.setHeader('Content-Type', 'application/pdf')
-  res.setHeader('Content-Disposition', `attachment; filename="${title}.pdf"`)
-
-  return res.send(pdf)
 }
