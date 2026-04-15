@@ -12,9 +12,9 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
     return (
       <div className="page active">
         <div className="empty-state">
-          <div className="empty-state-icon">ðŸ“„</div>
-          <div className="empty-state-title">Documento nÃ£o encontrado</div>
-          <button className="btn-sm" onClick={onBack} style={{ marginTop:16 }}>â† Voltar</button>
+          <div className="empty-state-icon">📄</div>
+          <div className="empty-state-title">Documento não encontrado</div>
+          <button className="btn-sm" onClick={onBack} style={{ marginTop:16 }}>← Voltar</button>
         </div>
       </div>
     )
@@ -27,19 +27,19 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
       // Nunca usa document.html como fallback pois pode ser Markdown/JSON cru.
       const html = paperRef.current?.innerHTML
       if (!html || html.trim() === '') {
-        showNotif?.('NÃ£o foi possÃ­vel capturar o conteÃºdo do documento.', 'âŒ')
+        showNotif?.('Não foi possível capturar o conteúdo do documento.', '❌')
         return
       }
       await exportPDF(html, document.title || 'documento')
-      showNotif?.('PDF gerado com sucesso! ðŸŽ‰', 'âœ…')
+      showNotif?.('PDF gerado com sucesso! 🎉', '✅')
     } catch (err) {
       console.error('Erro ao gerar PDF:', err)
-      // FIX: fallback tambÃ©m usa o HTML renderizado do DOM, nÃ£o document.html cru
+      // FIX: fallback também usa o HTML renderizado do DOM, não document.html cru
       const html = paperRef.current?.innerHTML
       if (html) {
         exportPrint(html, document.title)
       } else {
-        showNotif?.('Erro ao gerar PDF. Tente usar a opÃ§Ã£o Imprimir.', 'âŒ')
+        showNotif?.('Erro ao gerar PDF. Tente usar a opção Imprimir.', '❌')
       }
     } finally {
       setExporting(false)
@@ -57,7 +57,7 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
     if (editing) {
       const newHtml = paperRef.current?.innerHTML
       if (newHtml) onEdit?.({ ...document, html: newHtml })
-      showNotif?.('Documento salvo!', 'âœ…')
+      showNotif?.('Documento salvo!', '✅')
     }
     setEditing(e => !e)
   }
@@ -78,7 +78,7 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
     <div className="page active">
       {/* Header */}
       <div className="doc-view-header">
-        <button className="btn-action secondary" onClick={onBack}>â† Voltar</button>
+        <button className="btn-action secondary" onClick={onBack}>← Voltar</button>
 
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ fontSize:16, fontWeight:600, color:'var(--text)', marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
@@ -94,7 +94,7 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
           <button
             className={`btn-action ${editing ? 'primary' : 'secondary'}`}
             onClick={handleEditToggle}>
-            {editing ? 'ðŸ’¾ Salvar' : 'âœï¸ Editar'}
+            {editing ? '💾 Salvar' : '✏️ Editar'}
           </button>
           <button
             className="btn-action secondary"
@@ -102,13 +102,13 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
             {statusLabel[document.status || 'rascunho']}
           </button>
           <button className="btn-action primary" onClick={handlePDF} disabled={exporting}>
-            {exporting ? 'â³ Gerando...' : 'â¬‡ï¸ Baixar PDF'}
+            {exporting ? '⏳ Gerando...' : '⬇️ Baixar PDF'}
           </button>
           <button className="btn-action secondary" onClick={handlePrint}>
-            ðŸ–¨ï¸ Imprimir
+            🖨️ Imprimir
           </button>
           <button className={`btn-action danger${confirmDel ? '' : ''}`} onClick={handleDelete}>
-            {confirmDel ? 'âš ï¸ Confirmar exclusÃ£o' : 'ðŸ—‘ï¸ Excluir'}
+            {confirmDel ? '⚠️ Confirmar exclusão' : '🗑️ Excluir'}
           </button>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
           borderRadius:'var(--radius-sm)', padding:'10px 16px', marginBottom:16,
           fontSize:13, color:'var(--accent)'
         }}>
-          âœï¸ Modo de ediÃ§Ã£o ativo â€” clique no texto do documento para editar diretamente. Clique em "Salvar" quando terminar.
+          ✏️ Modo de edição ativo — clique no texto do documento para editar diretamente. Clique em "Salvar" quando terminar.
         </div>
       )}
 
