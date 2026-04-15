@@ -1,11 +1,6 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "api/ia.js",   "use": "@vercel/node"   },
-    { "src": "public/**",   "use": "@vercel/static"  }
-  ],
-  "routes": [
-    { "src": "/api/ia", "dest": "/api/ia.js" },
-    { "src": "/(.*)",   "dest": "/public/$1"  }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "env": {
+    "VITE_OPENROUTER_KEY": "@openrouter_key"
+  }
 }
