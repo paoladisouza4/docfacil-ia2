@@ -12,9 +12,9 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
     return (
       <div className="page active">
         <div className="empty-state">
-          <div className="empty-state-icon">📄</div>
-          <div className="empty-state-title">Documento não encontrado</div>
-          <button className="btn-sm" onClick={onBack} style={{ marginTop:16 }}>← Voltar</button>
+          <div className="empty-state-icon">ðŸ“„</div>
+          <div className="empty-state-title">Documento nÃ£o encontrado</div>
+          <button className="btn-sm" onClick={onBack} style={{ marginTop:16 }}>â† Voltar</button>
         </div>
       </div>
     )
@@ -23,27 +23,41 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
   const handlePDF = async () => {
     setExporting(true)
     try {
-      const html = paperRef.current?.innerHTML || document.html
+      // FIX: garante que sempre usa o HTML renderizado do DOM.
+      // Nunca usa document.html como fallback pois pode ser Markdown/JSON cru.
+      const html = paperRef.current?.innerHTML
+      if (!html || html.trim() === '') {
+        showNotif?.('NÃ£o foi possÃ­vel capturar o conteÃºdo do documento.', 'âŒ')
+        return
+      }
       await exportPDF(html, document.title || 'documento')
-      showNotif?.('PDF gerado com sucesso! 🎉', '✅')
-    } catch {
-      exportPrint(document.html, document.title)
+      showNotif?.('PDF gerado com sucesso! ðŸŽ‰', 'âœ…')
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err)
+      // FIX: fallback tambÃ©m usa o HTML renderizado do DOM, nÃ£o document.html cru
+      const html = paperRef.current?.innerHTML
+      if (html) {
+        exportPrint(html, document.title)
+      } else {
+        showNotif?.('Erro ao gerar PDF. Tente usar a opÃ§Ã£o Imprimir.', 'âŒ')
+      }
     } finally {
       setExporting(false)
     }
   }
 
   const handlePrint = () => {
-    const html = paperRef.current?.innerHTML || document.html
+    // FIX: sempre usa o HTML renderizado do DOM
+    const html = paperRef.current?.innerHTML
+    if (!html) return
     exportPrint(html, document.title)
   }
 
   const handleEditToggle = () => {
     if (editing) {
-      // save edited content
       const newHtml = paperRef.current?.innerHTML
       if (newHtml) onEdit?.({ ...document, html: newHtml })
-      showNotif?.('Documento salvo!', '✅')
+      showNotif?.('Documento salvo!', 'âœ…')
     }
     setEditing(e => !e)
   }
@@ -64,7 +78,7 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
     <div className="page active">
       {/* Header */}
       <div className="doc-view-header">
-        <button className="btn-action secondary" onClick={onBack}>← Voltar</button>
+        <button className="btn-action secondary" onClick={onBack}>â† Voltar</button>
 
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ fontSize:16, fontWeight:600, color:'var(--text)', marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
@@ -80,7 +94,7 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
           <button
             className={`btn-action ${editing ? 'primary' : 'secondary'}`}
             onClick={handleEditToggle}>
-            {editing ? '💾 Salvar' : '✏️ Editar'}
+            {editing ? 'ðŸ’¾ Salvar' : 'âœï¸ Editar'}
           </button>
           <button
             className="btn-action secondary"
@@ -88,13 +102,13 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
             {statusLabel[document.status || 'rascunho']}
           </button>
           <button className="btn-action primary" onClick={handlePDF} disabled={exporting}>
-            {exporting ? '⏳ Gerando...' : '⬇️ Baixar PDF'}
+            {exporting ? 'â³ Gerando...' : 'â¬‡ï¸ Baixar PDF'}
           </button>
           <button className="btn-action secondary" onClick={handlePrint}>
-            🖨️ Imprimir
+            ðŸ–¨ï¸ Imprimir
           </button>
           <button className={`btn-action danger${confirmDel ? '' : ''}`} onClick={handleDelete}>
-            {confirmDel ? '⚠️ Confirmar exclusão' : '🗑️ Excluir'}
+            {confirmDel ? 'âš ï¸ Confirmar exclusÃ£o' : 'ðŸ—‘ï¸ Excluir'}
           </button>
         </div>
       </div>
@@ -105,7 +119,7 @@ export default function DocumentView({ document, onBack, onEdit, onDelete, onSta
           borderRadius:'var(--radius-sm)', padding:'10px 16px', marginBottom:16,
           fontSize:13, color:'var(--accent)'
         }}>
-          ✏️ Modo de edição ativo — clique no texto do documento para editar diretamente. Clique em "Salvar" quando terminar.
+          âœï¸ Modo de ediÃ§Ã£o ativo â€” clique no texto do documento para editar diretamente. Clique em "Salvar" quando terminar.
         </div>
       )}
 
