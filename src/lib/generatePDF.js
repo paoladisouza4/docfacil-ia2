@@ -1,175 +1,234 @@
 // ══════════════════════════════════════════════════════════
-//  generatePDF.js — Gera PDF a partir do HTML do documento
-//  Usa jsPDF via CDN (injetado dinamicamente se necessário)
+//  generatePDF.js
+//  Estratégia: usa window.print() com @media print
+//  Elimina 100% dos problemas de renderização do jsPDF
+//  pois o browser é quem renderiza e gera o PDF — igual
+//  à pré-visualização. O que você vê é exatamente o que imprime.
 // ══════════════════════════════════════════════════════════
 
-// Largura fixa de 210mm em pixels a 96dpi — valor estável e confiável.
-// NÃO usar body.scrollWidth pois o iframe pode não ter terminado o layout.
-const A4_WIDTH_PX = 794
+const FONTS = 'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap'
 
-async function ensureJsPDF() {
-  if (window.jspdf?.jsPDF) return window.jspdf.jsPDF
-  if (window.jsPDF) return window.jsPDF
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-    s.onload = () => resolve(window.jspdf?.jsPDF || window.jsPDF)
-    s.onerror = reject
-    document.head.appendChild(s)
-  })
+const BASE_STYLES = `
+  @import url('${FONTS}');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 18mm 22mm;
+    width: 210mm;
+  }
+
+  .doc-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #1a1a1a;
+  }
+  .doc-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .doc-subtitle { font-size: 11px; color: #555; }
+  .doc-num      { font-size: 10px; color: #888; margin-top: 3px; font-weight: 600; }
+
+  .parties-block {
+    background: #f8f8f6;
+    border: 1px solid #e5e3dc;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 18px 0;
+  }
+  .parties-title {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #888; margin-bottom: 10px;
+  }
+  .party        { margin-bottom: 8px; }
+  .party-role   { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #555; margin-bottom: 2px; }
+  .party p      { font-size: 11px; color: #1a1a1a; line-height: 1.5; }
+
+  p {
+    font-size: 12px;
+    color: #333;
+    line-height: 1.8;
+    margin-bottom: 8px;
+    text-align: justify;
+  }
+  h1, h2, h3, h4 { font-family: 'DM Serif Display', serif; margin: 16px 0 6px; }
+  h1 { font-size: 15px; }
+  h2 { font-size: 13px; }
+  h3 { font-size: 12px; }
+  ul, ol { padding-left: 18px; margin-bottom: 8px; }
+  li     { font-size: 12px; line-height: 1.7; margin-bottom: 4px; }
+
+  .clausula        { margin: 16px 0; }
+  .clausula-title  { font-size: 11px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .clausula-body p { font-size: 11px; }
+
+  strong { font-weight: 700; }
+  em     { font-style: italic; }
+  hr     { border: none; border-top: 1px solid #ddd; margin: 16px 0; }
+
+  .signatures-block  { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; }
+  .signatures-title  { font-size: 10px; color: #666; margin-bottom: 18px; }
+  .sig-grid          { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .sig-item          { text-align: center; }
+  .sig-line          { border-top: 1px solid #1a1a1a; margin-bottom: 6px; }
+  .sig-name          { font-size: 11px; font-weight: 600; }
+  .sig-role          { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: .5px; }
+  .sig-doc           { font-size: 9px; color: #888; margin-top: 1px; }
+  .witnesses-block   { margin-top: 18px; }
+  .witnesses-title   { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #888; margin-bottom: 12px; }
+
+  .doc-aviso {
+    font-size: 9px; color: #aaa; text-align: center;
+    margin-top: 24px; padding-top: 12px;
+    border-top: 1px solid #eee; font-style: italic;
+  }
+
+  @media print {
+    html, body    { width: 210mm; margin: 0; padding: 14mm 18mm; }
+    .doc-paper    { box-shadow: none !important; border: none !important; }
+    .clausula, .party, .sig-item, .parties-block { page-break-inside: avoid; }
+    .signatures-block { page-break-before: auto; }
+    @page { size: A4 portrait; margin: 0; }
+  }
+`
+
+/** Escapa caracteres especiais para uso seguro em atributos HTML */
+function escapeHtml(str = '') {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
 
 /**
- * Aguarda o iframe terminar o layout verificando se scrollWidth estabilizou.
- * Evita capturar o DOM antes das fontes/estilos carregarem.
- */
-function waitForIframeLayout(iframe, timeout = 3000) {
-  return new Promise((resolve) => {
-    const start = Date.now()
-    let lastWidth = 0
-
-    const check = () => {
-      const body = iframe.contentDocument?.body
-      const currentWidth = body?.scrollWidth || 0
-
-      // Considera estável quando a largura parou de mudar OU timeout atingido
-      if (currentWidth > 0 && currentWidth === lastWidth) {
-        return resolve()
-      }
-      if (Date.now() - start >= timeout) {
-        return resolve()
-      }
-      lastWidth = currentWidth
-      setTimeout(check, 150)
-    }
-
-    // Aguarda mínimo de 800ms antes de começar a checar (fontes externas)
-    setTimeout(check, 800)
-  })
-}
-
-/**
- * Baixa o documento como PDF.
- * @param {string} html   - HTML interno do doc-paper
- * @param {string} title  - nome do arquivo (sem .pdf)
+ * Gera o PDF via janela de impressão do browser.
+ * O browser renderiza o HTML idêntico à pré-visualização
+ * e converte para PDF — sem jsPDF, sem problemas de renderização.
+ *
+ * @param {string} html   - innerHTML do doc-paper (HTML já renderizado)
+ * @param {string} title  - nome do arquivo
  */
 export async function downloadPDF(html, title = 'documento') {
-  let iframe = null
-  try {
-    const jsPDF = await ensureJsPDF()
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-
-    // Cria iframe invisível para renderizar o HTML
-    iframe = document.createElement('iframe')
-    // FIX: largura definida em px para garantir consistência com A4_WIDTH_PX
-    iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${A4_WIDTH_PX}px;height:1123px;border:none;visibility:hidden;`
-    document.body.appendChild(iframe)
-
-    const iDoc = iframe.contentDocument || iframe.contentWindow.document
-    iDoc.open()
-    iDoc.write(`
-      <!DOCTYPE html><html><head>
-      <meta charset="UTF-8"/>
-      <meta name="viewport" content="width=${A4_WIDTH_PX}"/>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-      <style>
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:'DM Sans',sans-serif; font-size:12px; color:#1a1a1a; padding:16mm 20mm; width:${A4_WIDTH_PX}px; }
-        .doc-header { text-align:center; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid #1a1a1a; }
-        .doc-title { font-family:'DM Serif Display',serif; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
-        .doc-subtitle { font-size:11px; color:#555; }
-        .doc-num { font-size:10px; color:#888; margin-top:3px; font-weight:600; }
-        .parties-block { background:#f8f8f6; border:1px solid #e5e3dc; border-radius:6px; padding:14px 18px; margin:18px 0; }
-        .parties-title { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#888; margin-bottom:10px; }
-        .party { margin-bottom:8px; }
-        .party-role { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#555; margin-bottom:2px; }
-        .party p { font-size:11px; color:#1a1a1a; line-height:1.5; }
-        p { font-size:12px; color:#333; line-height:1.7; margin-bottom:6px; text-align:justify; }
-        .clausula { margin:14px 0; }
-        .clausula-title { font-size:11px; font-weight:700; color:#1a1a1a; margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
-        .clausula-body p { font-size:11px; }
-        strong { font-weight:700; }
-        .signatures-block { margin-top:36px; padding-top:18px; border-top:1px solid #ddd; }
-        .signatures-title { font-size:10px; color:#666; margin-bottom:18px; }
-        .sig-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
-        .sig-item { text-align:center; }
-        .sig-line { border-top:1px solid #1a1a1a; margin-bottom:6px; }
-        .sig-name { font-size:11px; font-weight:600; }
-        .sig-role { font-size:9px; color:#555; text-transform:uppercase; letter-spacing:.5px; }
-        .sig-doc { font-size:9px; color:#888; margin-top:1px; }
-        .witnesses-block { margin-top:18px; }
-        .witnesses-title { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#888; margin-bottom:12px; }
-        .doc-aviso { font-size:9px; color:#aaa; text-align:center; margin-top:24px; padding-top:12px; border-top:1px solid #eee; font-style:italic; }
-      </style>
-      </head><body>${html}</body></html>
-    `)
-    iDoc.close()
-
-    // FIX: aguarda layout estabilizar em vez de timeout fixo de 800ms
-    await waitForIframeLayout(iframe)
-
-    await doc.html(iframe.contentDocument.body, {
-      callback: (d) => {
-        d.save(`${title.replace(/[^a-zA-Z0-9\-_]/g, '_')}.pdf`)
-      },
-      x: 0,
-      y: 0,
-      width: 210,
-      windowWidth: A4_WIDTH_PX, // FIX: valor fixo e confiável — era body.scrollWidth
-    })
-
-  } catch (err) {
-    console.error('Erro ao gerar PDF:', err)
-    // Fallback: abre janela de impressão
-    printDocument(html, title)
-  } finally {
-    // FIX: remoção do iframe movida para o finally — garante limpeza mesmo em erro
-    if (iframe && document.body.contains(iframe)) {
-      document.body.removeChild(iframe)
-    }
+  if (!html || typeof html !== 'string' || html.trim() === '') {
+    console.error('downloadPDF: conteúdo vazio ou inválido')
+    return
   }
+
+  const win = window.open('', '_blank', 'width=900,height=700')
+  if (!win) {
+    alert('Seu navegador bloqueou o pop-up. Por favor, permita pop-ups para este site e tente novamente.')
+    return
+  }
+
+  const safeTitle = escapeHtml(title)
+
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${safeTitle}</title>
+  <style>
+    ${BASE_STYLES}
+
+    #print-hint {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: #1a1a1a;
+      color: #fff;
+      text-align: center;
+      padding: 12px 16px;
+      font-family: sans-serif;
+      font-size: 13px;
+      z-index: 9999;
+    }
+    #print-hint strong { color: #c9a96e; }
+    #print-hint button {
+      margin-left: 12px;
+      padding: 4px 14px;
+      background: #c9a96e;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #print-hint .btn-close {
+      background: #555;
+      color: #fff;
+    }
+    /* Oculta o hint na impressão */
+    @media print {
+      #print-hint { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="print-hint">
+    Para salvar como PDF: selecione <strong>Salvar como PDF</strong> no destino da impressão.
+    <button onclick="window.print()">🖨️ Abrir impressão</button>
+    <button class="btn-close" onclick="window.close()">✕ Fechar</button>
+  </div>
+  <div style="margin-top: 48px;">
+    ${html}
+  </div>
+</body>
+</html>`)
+
+  win.document.close()
+
+  // Dispara impressão automaticamente após fontes carregarem
+  win.addEventListener('load', () => {
+    setTimeout(() => {
+      win.focus()
+      win.print()
+      win.addEventListener('afterprint', () => win.close())
+    }, 1000)
+  })
 }
 
 /**
- * Fallback: abre janela de impressão do navegador
+ * Abre janela de impressão (sem download automático).
+ *
+ * @param {string} html   - innerHTML do doc-paper
+ * @param {string} title  - nome do documento
  */
 export function printDocument(html, title = 'documento') {
-  const win = window.open('', '_blank')
+  const win = window.open('', '_blank', 'width=900,height=700')
   if (!win) {
-    console.error('Não foi possível abrir janela de impressão. Verifique se popups estão bloqueados.')
+    alert('Seu navegador bloqueou o pop-up. Por favor, permita pop-ups para este site e tente novamente.')
     return
   }
-  win.document.write(`
-    <!DOCTYPE html><html><head>
-    <title>${title}</title>
-    <meta charset="UTF-8"/>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <style>
-      * { box-sizing:border-box; margin:0; padding:0; }
-      body { font-family:'DM Sans',sans-serif; font-size:12px; color:#1a1a1a; padding:20mm 24mm; }
-      .doc-header { text-align:center; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid #1a1a1a; }
-      .doc-title { font-family:'DM Serif Display',serif; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
-      .doc-subtitle { font-size:11px; color:#555; }
-      .doc-num { font-size:10px; color:#888; margin-top:3px; }
-      .parties-block { background:#f8f8f6; border:1px solid #e5e3dc; border-radius:6px; padding:14px 18px; margin:18px 0; }
-      .parties-title { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#888; margin-bottom:10px; }
-      .party { margin-bottom:8px; }
-      .party-role { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#555; margin-bottom:2px; }
-      .party p, p { font-size:12px; color:#333; line-height:1.8; margin-bottom:6px; text-align:justify; }
-      .clausula { margin:14px 0; }
-      .clausula-title { font-size:11px; font-weight:700; color:#1a1a1a; margin-bottom:6px; text-transform:uppercase; }
-      strong { font-weight:700; }
-      .signatures-block { margin-top:40px; padding-top:20px; border-top:1px solid #ddd; }
-      .sig-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
-      .sig-item { text-align:center; }
-      .sig-line { border-top:1px solid #1a1a1a; margin-bottom:6px; }
-      .sig-name { font-size:11px; font-weight:600; }
-      .sig-role { font-size:9px; color:#555; text-transform:uppercase; }
-      .doc-aviso { font-size:9px; color:#aaa; text-align:center; margin-top:24px; padding-top:12px; border-top:1px solid #eee; font-style:italic; }
-      @media print { body { padding:10mm; } }
-    </style>
-    </head><body>${html}</body></html>
-  `)
+
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${escapeHtml(title)}</title>
+  <style>${BASE_STYLES}</style>
+</head>
+<body>${html}</body>
+</html>`)
+
   win.document.close()
-  setTimeout(() => { win.focus(); win.print() }, 600)
+
+  win.addEventListener('load', () => {
+    setTimeout(() => {
+      win.focus()
+      win.print()
+      win.addEventListener('afterprint', () => win.close())
+    }, 800)
+  })
 }
