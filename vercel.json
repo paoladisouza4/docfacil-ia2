@@ -1,13 +1,5 @@
 {
-  "functions": {
-    "api/pdf.js": {
-      "maxDuration": 30,
-      "includeFiles": "node_modules/@sparticuz/chromium/**"
-    }
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "env": {
     "VITE_OPENROUTER_KEY": "@openrouter_key"
   }
